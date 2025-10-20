@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# E-Commerce Платформа на Next.js та Supabase
 
-## Getting Started
+Це проект сучасної e-commerce платформи, створений з використанням Next.js (App Router) та Supabase як бекенд-сервісу.
 
-First, run the development server:
+## Технологічний стек
+
+- **Фреймворк:** [Next.js](https://nextjs.org/) 15
+- **Мова:** [TypeScript](https://www.typescriptlang.org/)
+- **Бекенд та База Даних:** [Supabase](https://supabase.com/) (PostgreSQL, Storage, Auth)
+- **Стилізація:** [Tailwind CSS](https://tailwindcss.com/)
+- **Валідація даних:** [Zod](https://zod.dev/)
+- **Керування станом:** [Zustand](https://github.com/pmndrs/zustand)
+- **Тестування:** [Vitest](https://vitest.dev/)
+
+## Архітектура
+
+Проект структуровано за принципами **Feature-Sliced Design (FSD)**, що забезпечує високу модульність та легкість масштабування. Код організовано за шарами та зрізами:
+
+- `src/app`: Глобальні налаштування додатку, стилі та сторінки.
+- `src/entities`: Бізнес-сутності (Товар, Замовлення, Користувач).
+- `src/features`: Дії користувача (додати в кошик, створити замовлення).
+- `src/widgets`: Композиційні блоки для сторінок (хедер, футер, список товарів).
+- `src/shared`: Перевикористовуваний код (UI-компоненти, хелпери, API).
+
+## Початок роботи
+
+### 1. Налаштування середовища
+
+Створіть копію файлу `.env.example` (якщо його немає, використайте цей шаблон) і перейменуйте її на `.env.local`. Заповніть змінні вашими даними з Supabase (Settings -> API):
+
+```
+NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+```
+
+### 2. Налаштування бази даних
+
+Для ініціалізації схеми бази даних необхідно виконати SQL-запити. Рекомендується зберігати всі міграції в директорії `/supabase/migrations`.
+
+### 3. Встановлення залежностей
+
+```bash
+npm install
+```
+
+### 4. Запуск сервера для розробки
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Відкрийте [http://localhost:3000](http://localhost:3000) у вашому браузері.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Доступні скрипти
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev`: запуск сервера в режимі розробки.
+- `npm run build`: збірка проекту для продакшену.
+- `npm run start`: запуск продакшн-сервера.
+- `npm run lint`: запуск ESLint для перевірки стилю коду.
 
-## Learn More
+## Ключові рішення
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Робота з БД:** Взаємодія з базою даних інкапсульована в репозиторіях (`src/lib/supabase/repositories`). Для складних транзакцій (наприклад, створення замовлення з товарами) використовуються RPC-функції PostgreSQL.
+- **Обробка зображень:** Зображення зберігаються в Supabase Storage. Оптимізація (зміна розміру, конвертація в WebP, кешування) відбувається на льоту за допомогою компонента `<Image>` з Next.js.
+- **Тестування:**  Vitest для написання модульних (з моками) та інтеграційних тестів (з окремою тестовою базою даних).
