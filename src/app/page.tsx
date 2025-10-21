@@ -1,8 +1,8 @@
-import { getProducts } from "@/lib/supabase/repositories/product.repository";
+import { productRepository } from "@/entities/product";
 import Image from "next/image";
 
 export default async function Home() {
-  const products = await getProducts();
+  const products = await productRepository.getProducts();
 
   return (
     <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
@@ -45,7 +45,13 @@ export default async function Home() {
               <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>
                 {product.name}
               </h2>
-              <p style={{ fontSize: "1.1rem", fontWeight: "bold", marginTop: "0.5rem" }}>
+              <p
+                style={{
+                  fontSize: "1.1rem",
+                  fontWeight: "bold",
+                  marginTop: "0.5rem",
+                }}
+              >
                 {product.price} грн
               </p>
             </div>

@@ -1,11 +1,11 @@
-import { OrderItemType } from "./types";
+import { OrderItem } from "./types";
 
 /**
  * Обчислює загальну кількість товарів у замовленні.
  * @param order - Об'єкт замовлення.
  * @returns Загальна кількість товарів.
  */
-export function getTotalItemCount(order: { items: OrderItemType[] }): number {
+export function getTotalItemCount(order: { items: OrderItem[] }): number {
   return order.items.reduce((total, item) => total + item.quantity, 0);
 }
 
