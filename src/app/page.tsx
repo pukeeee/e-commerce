@@ -1,4 +1,5 @@
 import { productRepository } from "@/entities/product";
+import { AddToCartButton } from "@/features/add-to-cart";
 import Image from "next/image";
 
 export default async function Home() {
@@ -54,6 +55,9 @@ export default async function Home() {
               >
                 {product.price} грн
               </p>
+              <div style={{ marginTop: "1rem" }}>
+                <AddToCartButton product={product} />
+              </div>
             </div>
           </div>
         ))}
