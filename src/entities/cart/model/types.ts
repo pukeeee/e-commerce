@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PublicProductSchema } from "@/entities/product";
+import { PublicProductSchema } from "@/entities/product/model/types";
 
 // =================================================================
 // ZOD SCHEMAS
@@ -55,9 +55,6 @@ export type Cart = z.infer<typeof CartSchema>;
 export interface CartStoreState {
   // --- state ---
   items: Record<string, CartItem>;
-  // --- computed ---
-  totalCount: number;
-  totalPrice: number;
   // --- actions ---
   addItem: (product: Omit<CartItem, "quantity">, quantity?: number) => void;
   removeItem: (productId: string) => void;
