@@ -1,30 +1,27 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { useThemeStore, type Theme } from "@/shared/lib/theme/useTheme";
+import { useEffect, useState } from "react";
+import { useTheme } from "@/shared/lib/theme/useTheme";
 
 interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
-interface ThemeProviderState {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-}
-
-// Створюємо контекст з початковим значенням undefined
-const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
-  undefined,
-);
-
 /**
  * @description
- * Провайдер теми, який керує логікою зміни теми,
- * синхронізує її з DOM та системними налаштуваннями.
+ * Компонент-провайдер, що керує логікою зміни теми.
+ *
+ * @summary
+ * Цей компонент не передає дані через контекст, а виконує дві основні задачі:
+ * 1. Синхронізує тему з DOM, додаючи або видаляючи клас 'dark' на `<html>`.
+ * 2. Відстежує зміни системної теми (`prefers-color-scheme`) і оновлює вигляд,
+ *    якщо обрано "системну" тему.
+ *
+ * Використовує хук `useTheme` (Zustand) для доступу до стану теми.
  */
 export function ThemeProvider({ children }: ThemeProviderProps) {
   // Отримуємо стан та функцію оновлення з нашого Zustand стору
-  const { theme, setTheme } = useThemeStore();
+  const { theme } = useTheme();
   // Стан для уникнення помилок гідратації
   const [mounted, setMounted] = useState(false);
 
@@ -47,41 +44,19 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     root.classList.toggle("dark", isDark);
   }, [theme, mounted]); // Запускаємо ефект при зміні теми або після монтування
 
-  // Слухач для системної теми
+  // Слухач для автоматичної зміни теми, якщо обрано "системну".
   useEffect(() => {
     if (theme !== "system" || !mounted) return;
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const handleChange = () => {
-      // Примусово оновлюємо клас, коли системна тема змінюється
-      document.documentElement.classList.toggle("dark", mediaQuery.matches);
+    const handleChange = (e: MediaQueryListEvent) => {
+      document.documentElement.classList.toggle("dark", e.matches);
     };
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme, mounted]);
 
-  const value = { theme, setTheme };
-
-  return (
-    <ThemeProviderContext.Provider value={value}>
-      {children}
-    </ThemeProviderContext.Provider>
-  );
+  return <>{children}</>;
 }
-
-/**
- * @description
- * Хук для доступу до стану теми та функції її зміни.
- * Повинен використовуватися всередині ThemeProvider.
- */
-export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-
-  return context;
-};

@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/widgets/header/ui/Header";
-import { ThemeProvider } from "@/shared/ui/theme";
-import { ThemeScript } from "@/shared/ui/theme";
+import { ThemeProvider, ThemeScript } from "@/shared/ui/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +27,10 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning>
       <head>
-        {/* Скрипт для уникнення мерехтіння теми */}
+        {/*
+          Інлайн-скрипт для миттєвого застосування теми.
+          Запобігає мерехтінню при завантаженні сторінки.
+        */}
         <ThemeScript />
       </head>
       <body

@@ -2,7 +2,7 @@
 
 import { MoonIcon, SunIcon } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { useTheme } from "@/shared/ui/theme";
+import { useTheme } from "@/shared/lib/theme/useTheme";
 import { useEffect, useState } from "react";
 
 /**
@@ -13,25 +13,31 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Цей хук потрібен, щоб уникнути помилок гідратації,
-  // оскільки тема на сервері може відрізнятися від клієнтської.
+  // Хук `useEffect` гарантує, що код для визначення теми
+  // виконається лише на клієнті, після монтування компонента.
+  // Це запобігає помилкам гідратації (hydration mismatch),
+  // оскільки тема на сервері (завжди 'system') може відрізнятися
+  // від збереженої в localStorage на клієнті.
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Визначаємо, яка тема активна на клієнті
-  const isDark =
-    theme === "dark" ||
-    (theme === "system" &&
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-  // Поки компонент не змонтовано, показуємо "пустишку", щоб уникнути стрибка UI
+  // Поки компонент не змонтовано, ми не можемо знати правильну тему.
+  // Щоб уникнути стрибка інтерфейсу (напр. іконка місяця змінюється на сонце),
+  // рендеримо неактивну "пустишку".
   if (!mounted) {
     return (
       <Button variant="outline" size="icon" disabled className="h-9 w-9" />
     );
   }
+
+  // Визначаємо, чи є поточною тема темною.
+  // Враховуємо як прямий вибір 'dark', так і системне налаштування.
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   const toggleTheme = () => {
     // Просте перемикання між світлою та темною

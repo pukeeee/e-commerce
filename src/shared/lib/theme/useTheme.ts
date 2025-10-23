@@ -8,7 +8,7 @@ const THEME_STORAGE_KEY = "theme-storage";
 
 export type Theme = "light" | "dark" | "system";
 
-interface ThemeStore {
+interface ThemeState {
   theme: Theme;
   setTheme: (theme: Theme) => void;
 }
@@ -27,7 +27,7 @@ interface ThemeStore {
  * const { theme, setTheme } = useTheme();
  * setTheme("dark");
  */
-export const useThemeStore = create<ThemeStore>()(
+export const useTheme = create<ThemeState>()(
   persist(
     (set) => ({
       theme: "system",
@@ -35,7 +35,6 @@ export const useThemeStore = create<ThemeStore>()(
     }),
     {
       name: THEME_STORAGE_KEY,
-      // Використовуємо імпортований об'єкт
       storage: createJSONStorage(() => ssrSafeLocalStorage),
     },
   ),
