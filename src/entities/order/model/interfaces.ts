@@ -13,9 +13,9 @@ export interface IOrderRepository {
   create(data: CreateOrderPayload): Promise<Order>;
 
   /**
-   * Отримує замовлення за його ID.
+   * Отримує замовлення за його ID разом з усіма товарами.
    * @param id - Ідентифікатор замовлення.
-   * @returns {Promise<Order | null>} Замовлення або null, якщо не знайдено.
+   * @returns {Promise<Order>} Замовлення. Кидає помилку `NotFoundError`, якщо не знайдено.
    */
-  getById(id: string): Promise<Order | null>;
+  getById(id: string): Promise<Order>;
 }

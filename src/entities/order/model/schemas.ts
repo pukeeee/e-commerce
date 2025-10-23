@@ -57,7 +57,7 @@ export const CreateOrderPayloadSchema = z.object({
     .positive("Загальна сума має бути позитивною")
     .max(10_000_000, "Сума замовлення занадто велика"),
   paymentMethod: PaymentMethodEnum,
-  shippingAdress: z
+  shippingAddress: z
     .string()
     .min(10, "Адреса доставки має містити принаймні 10 символів")
     .max(200, "Адреса доставки занадто довга"),

@@ -1,3 +1,4 @@
+import { DatabaseError, NotFoundError } from "@/shared/lib/errors/app-error";
 import { createClient } from "@/shared/lib/supabase/server";
 import type { Product } from "../model/types";
 import type { IProductRepository } from "../model/interfaces";
@@ -16,8 +17,6 @@ type RawProductType = {
 /**
  * @function toCamelCase
  * @description Перетворює snake_case об'єкт з бази даних в camelCase для використання в додатку.
- * @param {RawProductType} product - Об'єкт товару з бази даних.
- * @returns {ProductType} Об'єкт товару в форматі camelCase.
  */
 const toCamelCase = (product: RawProductType): Product => ({
   id: product.id,
@@ -38,20 +37,22 @@ class SupabaseProductRepository implements IProductRepository {
   /**
    * @method getProducts
    * @description Отримує список усіх активних товарів з бази даних.
-   * @returns {Promise<ProductType[]>} Масив товарів.
    */
   async getProducts(): Promise<Product[]> {
     const supabase = await createClient();
 
     const { data: products, error } = await supabase
       .from("products")
-      .select("*" as const)
+      .select("*")
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Supabase error:", error.message);
-      throw new Error("Не вдалося завантажити товари.");
+      throw new DatabaseError("Не вдалося завантажити товари.", {
+        code: error.code,
+        message: error.message,
+        hint: error.hint,
+      });
     }
 
     return products.map(toCamelCase);
@@ -59,11 +60,9 @@ class SupabaseProductRepository implements IProductRepository {
 
   /**
    * @method getById
-   * @description Отримує один товар за його ID.
-   * @param {string} id - Ідентифікатор товару.
-   * @returns {Promise<ProductType | null>} Товар або null, якщо не знайдено.
+   * @description Отримує один товар за його ID. Кидає помилку, якщо не знайдено.
    */
-  async getById(id: string): Promise<Product | null> {
+  async getById(id: string): Promise<Product> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -73,8 +72,14 @@ class SupabaseProductRepository implements IProductRepository {
       .single();
 
     if (error) {
-      console.error("Supabase error:", error.message);
-      return null;
+      if (error.code === "PGRST116") {
+        // Код PGRST116 означає, що запит не повернув жодного рядка.
+        throw new NotFoundError("Товар");
+      }
+      throw new DatabaseError("Помилка при отриманні товару.", {
+        code: error.code,
+        message: error.message,
+      });
     }
 
     return toCamelCase(data as RawProductType);
