@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { ShoppingBagIcon } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { CartSheet } from "@/widgets/cart-sheet/ui/CartSheet"; // Імпортуємо напряму
+import { CartSheet } from "@/widgets/cart-sheet/ui/CartSheet";
+import { ThemeToggle } from "@/shared/ui/theme";
 
 /**
  * @widget Header
@@ -23,7 +24,10 @@ export function Header() {
             <Link href="/contacts">Контакти</Link>
           </Button>
 
-          {/* Просто вставляємо наш готовий віджет кошика */}
+          {/* Кнопка перемикача теми */}
+          <ThemeToggle />
+
+          {/* Кошик */}
           <CartSheet />
         </nav>
       </div>

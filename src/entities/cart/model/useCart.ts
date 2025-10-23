@@ -9,51 +9,10 @@
  */
 
 import { create } from "zustand";
-import {
-  persist,
-  createJSONStorage,
-  type StateStorage,
-} from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { CartItem, CartStoreState } from "./types";
 import { CartItemSchema } from "./types";
-
-/**
- * Створюємо безпечний для SSR об'єкт, що імітує API localStorage.
- * Він перевіряє, чи виконується код у браузері, перш ніж звертатися до `window`.
- */
-const ssrSafeLocalStorage: StateStorage = {
-  getItem: (name: string): string | null => {
-    try {
-      if (typeof window === "undefined") {
-        return null;
-      }
-      return window.localStorage.getItem(name);
-    } catch (error) {
-      console.error("Помилка читання з localStorage:", error);
-      return null;
-    }
-  },
-  setItem: (name: string, value: string): void => {
-    try {
-      if (typeof window === "undefined") {
-        return;
-      }
-      window.localStorage.setItem(name, value);
-    } catch (error) {
-      console.error("Помилка запису в localStorage:", error);
-    }
-  },
-  removeItem: (name: string): void => {
-    try {
-      if (typeof window === "undefined") {
-        return;
-      }
-      window.localStorage.removeItem(name);
-    } catch (error) {
-      console.error("Помилка видалення з localStorage:", error);
-    }
-  },
-};
+import { ssrSafeLocalStorage } from "@/shared/lib/storage/ssr-safe-local-storage";
 
 export const createCartStore = () => {
   return create<CartStoreState>()(
