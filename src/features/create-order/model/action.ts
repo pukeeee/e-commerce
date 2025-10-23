@@ -5,7 +5,7 @@ import {
   CreateOrderPayloadSchema,
   type CreateOrderPayload,
 } from "@/entities/order";
-import { orderRepository } from "@/entities/order";
+import { orderRepository } from "@/entities/order/api/order.repository";
 
 type FormErrors = z.ZodFormattedError<CreateOrderPayload>;
 

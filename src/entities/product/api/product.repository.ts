@@ -1,5 +1,6 @@
 import { createClient } from "@/shared/lib/supabase/server";
-import { IProductRepository, type Product } from "../model/types";
+import type { Product } from "../model/types";
+import type { IProductRepository } from "../model/interfaces";
 
 // Проміжний тип для сирих даних з Supabase, оскільки поля в БД у snake_case
 type RawProductType = {

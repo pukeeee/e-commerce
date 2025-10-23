@@ -10,8 +10,9 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { CartItem, CartStoreState } from "./types";
-import { CartItemSchema } from "./types";
+import type { CartItem } from "./types";
+import type { CartStoreState } from "./interfaces";
+import { CartItemSchema } from "./schemas";
 import { ssrSafeLocalStorage } from "@/shared/lib/storage/ssr-safe-local-storage";
 
 export const createCartStore = () => {

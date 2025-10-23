@@ -1,9 +1,6 @@
 import { createClient } from "@/shared/lib/supabase/server";
-import type {
-  CreateOrderPayload,
-  Order,
-  IOrderRepository,
-} from "@/entities/order/model/types";
+import type { CreateOrderPayload, Order } from "@/entities/order/model/types";
+import type { IOrderRepository } from "../model/interfaces";
 
 class SupabaseOrderRepository implements IOrderRepository {
   async create(data: CreateOrderPayload): Promise<Order> {

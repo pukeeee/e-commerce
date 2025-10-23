@@ -1,4 +1,4 @@
-import { productRepository } from "@/entities/product";
+import { productRepository } from "@/entities/product/api/product.repository";
 import { AddToCartButton } from "@/features/add-to-cart";
 import Image from "next/image";
 
