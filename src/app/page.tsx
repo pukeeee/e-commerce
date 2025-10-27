@@ -2,7 +2,9 @@ import { getProductsAction } from "@/features/get-products/action";
 import { ProductGrid } from "@/widgets/catalog/ui/Catalog";
 import { ErrorMessage } from "@/shared/ui/error-message";
 
-export default async function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
   const result = await getProductsAction();
 
   // Спочатку обробляємо випадок помилки
@@ -20,7 +22,6 @@ export default async function Home() {
     );
   }
 
-  // Якщо помилки не було, TypeScript тепер впевнений, що в `result` є `data`
   return (
     <main className="py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

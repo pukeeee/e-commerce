@@ -27,7 +27,6 @@ export const ChangeQuantity = ({ itemId, className }: ChangeQuantityProps) => {
         className="h-8 w-8"
         onClick={() => decrease(itemId)}
         aria-label="Зменшити кількість"
-        disabled={quantity <= 1}
       >
         <MinusIcon className="h-4 w-4" />
       </Button>

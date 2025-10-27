@@ -9,7 +9,7 @@ export function handleServerError(error: unknown) {
   if (error instanceof AppError) {
     return {
       // Очікувана помилка, яку ми самі згенерували
-      success: false,
+      success: false as const,
       error: {
         code: error.code,
         message: error.message,
@@ -23,7 +23,7 @@ export function handleServerError(error: unknown) {
   console.error("Unexpected server error:", error);
 
   return {
-    success: false,
+    success: false as const,
     error: {
       code: "INTERNAL_ERROR",
       message: "Внутрішня помилка сервера. Спробуйте, будь ласка, пізніше.",
