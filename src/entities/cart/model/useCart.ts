@@ -15,9 +15,8 @@ import type { CartStoreState } from "./interfaces";
 import { CartItemSchema } from "./schemas";
 import { ssrSafeLocalStorage } from "@/shared/lib/storage/ssr-safe-local-storage";
 
-// Визначення стору залишається без змін
-const useCartStoreBase = create<CartStoreState>()(
-  persist(
+const useCartStoreBase = create(
+  persist<CartStoreState>(
     (set) => ({
       // --- State ---
       items: {},
@@ -98,7 +97,6 @@ const useCartStoreBase = create<CartStoreState>()(
  * Безпека гарантується зовнішнім компонентом ClientOnly.
  */
 export function useCart<T>(selector: (state: CartStoreState) => T): T {
-  // Більше жодних useState та useEffect!
   return useCartStoreBase(selector);
 }
 

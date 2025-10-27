@@ -1,6 +1,6 @@
 "use client";
 
-import { useCart } from "@/entities/cart";
+import { useCartItem } from "@/entities/cart/model/selectors";
 import type { PublicProduct } from "@/entities/product";
 import { Button } from "@/shared/ui/button";
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from "lucide-react";
@@ -17,13 +17,9 @@ interface AddToCartButtonProps {
  * Показує або кнопку "Додати в кошик", або лічильник для зміни кількості.
  */
 const AddToCartButtonInner = ({ product }: AddToCartButtonProps) => {
-  // Отримуємо кількість товару (це єдина підписка, що викликає ре-рендер)
-  const quantity = useCart((state) => state.items[product.id]?.quantity ?? 0);
-
-  // Отримуємо екшени. Zustand гарантує, що вони стабільні і їх виклик не призведе до ре-рендеру.
-  const addItem = useCart((state) => state.addItem);
-  const increaseQuantity = useCart((state) => state.increaseQuantity);
-  const decreaseQuantity = useCart((state) => state.decreaseQuantity);
+  const { quantity, addItem, increaseQuantity, decreaseQuantity } = useCartItem(
+    product.id,
+  );
 
   // Якщо товару немає в кошику, показуємо кнопку для додавання
   if (quantity === 0) {

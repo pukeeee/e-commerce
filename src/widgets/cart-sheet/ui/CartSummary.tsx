@@ -1,6 +1,7 @@
 "use client";
 
-import { useCart, CartService } from "@/entities/cart";
+import { useCart } from "@/entities/cart";
+import { calculateCartTotals } from "@/entities/cart/lib/calculations";
 import { Button } from "@/shared/ui/button";
 import { formatPrice } from "@/shared/lib/utils";
 import { ClearCartButton } from "@/features/clear-cart/ui/ClearCartButton";
@@ -19,7 +20,7 @@ export const CartSummary = () => {
 
   // 2. Обчислюємо потрібні значення за допомогою `useMemo` для кешування.
   const { total, itemCount } = useMemo(
-    () => CartService.calculateTotals(items),
+    () => calculateCartTotals(items),
     [items],
   );
 
