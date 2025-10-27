@@ -4,6 +4,9 @@ import { useCart } from "@/entities/cart";
 import type { PublicProduct } from "@/entities/product";
 import { Button } from "@/shared/ui/button";
 import { MinusIcon, PlusIcon, ShoppingCartIcon } from "lucide-react";
+import { ClientOnly } from "@/shared/lib/hydration/ClientOnly";
+import { ButtonSkeleton } from "@/shared/ui/skeleton";
+import { memo } from "react";
 
 interface AddToCartButtonProps {
   product: PublicProduct;
@@ -13,7 +16,7 @@ interface AddToCartButtonProps {
  * Компонент кнопки для додавання/оновлення товару в кошику.
  * Показує або кнопку "Додати в кошик", або лічильник для зміни кількості.
  */
-export const AddToCartButton = ({ product }: AddToCartButtonProps) => {
+const AddToCartButtonInner = ({ product }: AddToCartButtonProps) => {
   // Отримуємо кількість товару (це єдина підписка, що викликає ре-рендер)
   const quantity = useCart((state) => state.items[product.id]?.quantity ?? 0);
 
@@ -58,3 +61,13 @@ export const AddToCartButton = ({ product }: AddToCartButtonProps) => {
     </div>
   );
 };
+
+export const AddToCartButton = memo(({ product }: AddToCartButtonProps) => {
+  return (
+    <ClientOnly fallback={<ButtonSkeleton />}>
+      <AddToCartButtonInner product={product} />
+    </ClientOnly>
+  );
+});
+
+AddToCartButton.displayName = "AddToCartButton";
