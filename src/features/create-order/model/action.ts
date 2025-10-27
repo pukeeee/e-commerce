@@ -5,7 +5,7 @@ import {
   CreateOrderPayloadSchema,
   type CreateOrderPayload,
 } from "@/entities/order";
-import { orderRepository } from "@/entities/order/api/order.repository";
+import { getOrderRepository } from "@/shared/api/repositories/order.repository";
 
 type FormErrors = z.ZodFormattedError<CreateOrderPayload>;
 
@@ -22,6 +22,7 @@ export const createOrderAction = async (orderData: CreateOrderPayload) => {
   }
 
   try {
+    const orderRepository = await getOrderRepository();
     const newOrder = await orderRepository.create(validationResult.data);
 
     return {

@@ -1,8 +1,11 @@
-import { productRepository } from "@/entities/product/api/product.repository";
+import { getProductRepository } from "@/shared/api/repositories/product.repository";
 import { AddToCartButton } from "@/features/add-to-cart";
 import Image from "next/image";
 
 export default async function Home() {
+  // Спочатку отримуємо екземпляр репозиторію
+  const productRepository = await getProductRepository();
+  // А потім вже викликаємо його методи
   const products = await productRepository.getProducts();
 
   return (
