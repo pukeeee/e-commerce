@@ -6,8 +6,7 @@ import {
   type CreateOrderPayload,
 } from "@/entities/order";
 import { getOrderRepository } from "@/shared/api/repositories/order.repository";
-
-type FormErrors = z.ZodFormattedError<CreateOrderPayload>;
+import { handleServerError } from "@/shared/lib/errors/error-handler";
 
 export const createOrderAction = async (orderData: CreateOrderPayload) => {
   const validationResult = CreateOrderPayloadSchema.safeParse(orderData);
@@ -30,13 +29,6 @@ export const createOrderAction = async (orderData: CreateOrderPayload) => {
       order: newOrder,
     };
   } catch (error) {
-    console.error("Order creation failed:", error);
-
-    return {
-      success: false as const,
-      errors: {
-        _errors: ["Не вдалося створити замовлення. Спробуйте ще раз."],
-      } as FormErrors,
-    };
+    return handleServerError(error);
   }
 };
