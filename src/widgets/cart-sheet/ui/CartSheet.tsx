@@ -52,7 +52,7 @@ export const CartSheet = () => {
         </Button>
       </SheetTrigger>
 
-      <SheetContent className="flex w-full flex-col sm:max-w-lg">
+      <SheetContent onOpenAutoFocus={(e) => e.preventDefault()} className="flex w-full flex-col sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Ваш кошик</SheetTitle>
         </SheetHeader>

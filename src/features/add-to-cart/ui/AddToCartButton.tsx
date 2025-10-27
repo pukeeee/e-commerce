@@ -29,8 +29,10 @@ const AddToCartButtonInner = ({ product }: AddToCartButtonProps) => {
         className="w-full"
         aria-label="Додати товар у кошик"
       >
-        <ShoppingCartIcon className="mr-2 h-4 w-4" />
-        Додати в кошик
+        {/* Іконка, яка має відступ справа тільки на екранах sm і більше */}
+        <ShoppingCartIcon className="h-4 w-4 sm:mr-2" />
+        {/* Текст, який прихований по дефолту і з'являється на екранах sm і більше */}
+        <span className="hidden sm:inline">Додати в кошик</span>
       </Button>
     );
   }
