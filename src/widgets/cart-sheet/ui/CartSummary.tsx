@@ -8,9 +8,6 @@ import { ClearCartButton } from "@/features/clear-cart/ui/ClearCartButton";
 import { useMemo } from "react";
 import Link from "next/link";
 
-// Припустимо, що кнопка "Оформити замовлення" веде на відповідну сторінку
-// import Link from "next/link";
-
 /**
  * @description Віджет, що відображає підсумок кошика: загальну вартість та кнопки дій.
  */

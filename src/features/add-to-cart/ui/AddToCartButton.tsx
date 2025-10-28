@@ -40,7 +40,7 @@ const AddToCartButtonInner = ({ product }: AddToCartButtonProps) => {
   return (
     <div className="flex items-center justify-center gap-2">
       <Button
-        variant="outline"
+        variant="secondary"
         size="icon"
         onClick={() => decreaseQuantity(product.id)}
         aria-label="Зменшити кількість товару"
@@ -49,7 +49,7 @@ const AddToCartButtonInner = ({ product }: AddToCartButtonProps) => {
       </Button>
       <span className="min-w-[2rem] text-center font-medium">{quantity}</span>
       <Button
-        variant="outline"
+        variant="secondary"
         size="icon"
         onClick={() => increaseQuantity(product.id)}
         aria-label="Збільшити кількість товару"

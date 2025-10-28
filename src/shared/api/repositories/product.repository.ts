@@ -68,6 +68,27 @@ class SupabaseProductRepository
     if (error) this.handleError(error);
     return this.toCamelCase(data);
   }
+
+  /**
+   * @method getByIds
+   * @description Отримує список товарів за їх ID.
+   */
+  async getByIds(ids: string[]): Promise<Product[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const { data, error } = await this.supabase
+      .from(this.tableName)
+      .select("*")
+      .in("id", ids) // Використовуємо метод .in() для фільтрації за масивом ID
+      .eq("is_active", true);
+
+    if (error)
+      this.handleError(error, "Не вдалося завантажити товари за списком ID");
+
+    return data.map(this.toCamelCase.bind(this));
+  }
 }
 
 // Фабрика для створення репозиторію.

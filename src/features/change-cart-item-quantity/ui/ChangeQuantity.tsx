@@ -22,7 +22,7 @@ export const ChangeQuantity = ({ itemId, className }: ChangeQuantityProps) => {
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Button
-        variant="outline"
+        variant="secondary"
         size="icon"
         className="h-8 w-8"
         onClick={() => decrease(itemId)}
@@ -38,7 +38,7 @@ export const ChangeQuantity = ({ itemId, className }: ChangeQuantityProps) => {
         {quantity}
       </span>
       <Button
-        variant="outline"
+        variant="secondary"
         size="icon"
         className="h-8 w-8"
         onClick={() => increase(itemId)}

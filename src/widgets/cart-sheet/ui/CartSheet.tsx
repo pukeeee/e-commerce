@@ -11,11 +11,14 @@ import {
 } from "@/shared/ui/sheet";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
-import { useCart } from "@/entities/cart";
+import { useCart, useCartStoreBase } from "@/entities/cart";
 import { CartItemsList } from "./CartItemsList";
 import { CartSummary } from "./CartSummary";
-import { useMemo, memo } from "react";
 import { ClientOnly } from "@/shared/lib/hydration/ClientOnly";
+import { toast } from "sonner";
+import { useMemo, memo, useState, useEffect, useTransition } from "react";
+import { getProductsByIdsAction } from "@/features/get-products-by-ids/action";
+import { CartItemSkeleton } from "@/shared/ui/skeleton";
 
 const CartBadge = memo(() => {
   const items = useCart((state) => state.items);
@@ -40,8 +43,59 @@ CartBadge.displayName = "CartBadge";
  * Поєднує в собі тригер (кнопку), список товарів та підсумок.
  */
 export const CartSheet = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const syncWithServer = useCart((state) => state.syncWithServer);
+  const [isSyncing, startSyncTransition] = useTransition();
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const syncCart = async () => {
+      // Отримуємо найсвіжіший стан прямо тут, всередині ефекту
+      const currentItems = useCartStoreBase.getState().items;
+      const hasItems = Object.keys(currentItems).length > 0;
+
+      if (!hasItems) return;
+
+      try {
+        const productIds = Object.keys(currentItems);
+        const result = await getProductsByIdsAction(productIds);
+
+        if (!result.success) {
+          toast.error(result.error.message || "Не вдалося оновити кошик.");
+          return;
+        }
+
+        const actualProducts = result.data;
+        // syncWithServer - стабільна функція, її можна викликати
+        const { removedItems, updatedItems } =
+          await syncWithServer(actualProducts);
+
+        if (removedItems.length > 0) {
+          toast.warning(
+            `Видалено з кошика: ${removedItems.map((i) => i.name).join(", ")}`,
+          );
+        }
+        if (updatedItems.length > 0) {
+          toast.info(
+            `Оновлено дані для: ${updatedItems.map((i) => i.name).join(", ")}`,
+          );
+        }
+      } catch (error) {
+        console.error("Помилка синхронізації кошика:", error);
+        toast.error("Не вдалося оновити кошик.");
+      }
+    };
+
+    startSyncTransition(() => {
+      syncCart();
+    });
+  }, [isOpen, syncWithServer, startSyncTransition]);
+
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
@@ -52,18 +106,30 @@ export const CartSheet = () => {
         </Button>
       </SheetTrigger>
 
-      <SheetContent onOpenAutoFocus={(e) => e.preventDefault()} className="flex w-full flex-col sm:max-w-lg">
+      <SheetContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="flex w-full flex-col sm:max-w-lg"
+      >
         <SheetHeader>
           <SheetTitle>Ваш кошик</SheetTitle>
         </SheetHeader>
 
-        <div className="my-4 flex-1 overflow-y-auto px-6">
-          <CartItemsList />
-        </div>
-
-        <SheetFooter>
-          <CartSummary />
-        </SheetFooter>
+        {isSyncing ? (
+          <div className="my-4 flex-1 divide-y overflow-y-auto px-6">
+            <CartItemSkeleton />
+            <CartItemSkeleton />
+            <CartItemSkeleton />
+          </div>
+        ) : (
+          <>
+            <div className="my-4 flex-1 overflow-y-auto px-6">
+              <CartItemsList />
+            </div>
+            <SheetFooter className="px-6 py-4">
+              <CartSummary />
+            </SheetFooter>
+          </>
+        )}
       </SheetContent>
     </Sheet>
   );

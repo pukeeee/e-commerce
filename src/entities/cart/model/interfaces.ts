@@ -1,4 +1,11 @@
 import { CartItem } from "./types";
+import { PublicProduct } from "@/entities/product";
+
+// Інформація про зміни, яку поверне синхронізація для UI
+export interface SyncChanges {
+  removedItems: CartItem[];
+  updatedItems: CartItem[];
+}
 
 /**
  * @description Інтерфейс для клієнтського state-менеджера кошика (наприклад, Zustand).
@@ -13,4 +20,5 @@ export interface CartStoreState {
   clear: () => void;
   increaseQuantity: (productId: string) => void;
   decreaseQuantity: (productId: string) => void;
+  syncWithServer: (actualProducts: PublicProduct[]) => Promise<SyncChanges>;
 }

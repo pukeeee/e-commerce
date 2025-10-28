@@ -14,10 +14,11 @@ import type { CartItem } from "./types";
 import type { CartStoreState } from "./interfaces";
 import { CartItemSchema } from "./schemas";
 import { ssrSafeLocalStorage } from "@/shared/lib/storage/ssr-safe-local-storage";
+import { syncCartWithProducts } from "../lib/cart-sync";
 
 const useCartStoreBase = create(
   persist<CartStoreState>(
-    (set) => ({
+    (set, get) => ({
       // --- State ---
       items: {},
 
@@ -79,6 +80,22 @@ const useCartStoreBase = create(
             },
           };
         });
+      },
+      syncWithServer: async (actualProducts) => {
+        // Використовуємо `get()` для доступу до поточного стану без підписки на зміни
+        const currentItems = get().items;
+        const result = syncCartWithProducts(currentItems, actualProducts);
+
+        // Оновлюємо стан, тільки якщо були реальні зміни
+        if (result.hasChanges) {
+          set({ items: result.syncedItems });
+        }
+
+        // Повертаємо інформацію про зміни для UI (наприклад, для показу сповіщень)
+        return {
+          removedItems: result.removedItems,
+          updatedItems: result.updatedItems,
+        };
       },
       clear: () => {
         set({ items: {} });
