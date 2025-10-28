@@ -25,7 +25,7 @@ class SupabaseProductRepository
 {
   protected tableName = "products";
 
-  protected toCamelCase(raw: RawProduct): Product {
+  protected toCamelCase = (raw: RawProduct): Product => {
     return {
       id: raw.id,
       createdAt: raw.created_at,
@@ -35,7 +35,7 @@ class SupabaseProductRepository
       imageUrl: raw.image_url ?? undefined,
       isActive: raw.is_active,
     };
-  }
+  };
 
   /**
    * @method getProducts
@@ -50,8 +50,7 @@ class SupabaseProductRepository
 
     if (error) this.handleError(error, "Не вдалося завантажити товари");
 
-    // .bind(this) потрібен, щоб метод toCamelCase не втратив свій контекст (this)
-    return data.map(this.toCamelCase.bind(this));
+    return data.map(this.toCamelCase);
   }
 
   /**
@@ -87,7 +86,7 @@ class SupabaseProductRepository
     if (error)
       this.handleError(error, "Не вдалося завантажити товари за списком ID");
 
-    return data.map(this.toCamelCase.bind(this));
+    return data.map(this.toCamelCase);
   }
 }
 

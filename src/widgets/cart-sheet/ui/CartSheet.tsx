@@ -16,7 +16,14 @@ import { CartItemsList } from "./CartItemsList";
 import { CartSummary } from "./CartSummary";
 import { ClientOnly } from "@/shared/lib/hydration/ClientOnly";
 import { toast } from "sonner";
-import { useMemo, memo, useState, useEffect, useTransition } from "react";
+import {
+  useMemo,
+  memo,
+  useState,
+  useEffect,
+  useTransition,
+  useCallback,
+} from "react";
 import { getProductsByIdsAction } from "@/features/get-products-by-ids/action";
 import { CartItemSkeleton } from "@/shared/ui/skeleton";
 
@@ -47,52 +54,45 @@ export const CartSheet = () => {
   const syncWithServer = useCart((state) => state.syncWithServer);
   const [isSyncing, startSyncTransition] = useTransition();
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
+  // Виносимо логіку синхронізації в окрему функцію
+  const handleSyncCart = useCallback(async () => {
+    const currentItems = useCartStoreBase.getState().items;
+    if (Object.keys(currentItems).length === 0) return;
 
-    const syncCart = async () => {
-      // Отримуємо найсвіжіший стан прямо тут, всередині ефекту
-      const currentItems = useCartStoreBase.getState().items;
-      const hasItems = Object.keys(currentItems).length > 0;
+    try {
+      const productIds = Object.keys(currentItems);
+      const result = await getProductsByIdsAction(productIds);
 
-      if (!hasItems) return;
-
-      try {
-        const productIds = Object.keys(currentItems);
-        const result = await getProductsByIdsAction(productIds);
-
-        if (!result.success) {
-          toast.error(result.error.message || "Не вдалося оновити кошик.");
-          return;
-        }
-
-        const actualProducts = result.data;
-        // syncWithServer - стабільна функція, її можна викликати
-        const { removedItems, updatedItems } =
-          await syncWithServer(actualProducts);
-
-        if (removedItems.length > 0) {
-          toast.warning(
-            `Видалено з кошика: ${removedItems.map((i) => i.name).join(", ")}`,
-          );
-        }
-        if (updatedItems.length > 0) {
-          toast.info(
-            `Оновлено дані для: ${updatedItems.map((i) => i.name).join(", ")}`,
-          );
-        }
-      } catch (error) {
-        console.error("Помилка синхронізації кошика:", error);
-        toast.error("Не вдалося оновити кошик.");
+      if (!result.success) {
+        toast.error(result.error.message || "Не вдалося оновити кошик.");
+        return;
       }
-    };
 
-    startSyncTransition(() => {
-      syncCart();
-    });
-  }, [isOpen, syncWithServer, startSyncTransition]);
+      const { removedItems, updatedItems } = await syncWithServer(result.data);
+
+      if (removedItems.length > 0) {
+        toast.warning(
+          `Видалено з кошика: ${removedItems.map((i) => i.name).join(", ")}`,
+        );
+      }
+      if (updatedItems.length > 0) {
+        toast.info(
+          `Оновлено дані для: ${updatedItems.map((i) => i.name).join(", ")}`,
+        );
+      }
+    } catch (error) {
+      console.error("Помилка синхронізації кошика:", error);
+      toast.error("Не вдалося оновити кошик.");
+    }
+  }, [syncWithServer]);
+
+  useEffect(() => {
+    if (isOpen) {
+      startSyncTransition(() => {
+        handleSyncCart();
+      });
+    }
+  }, [isOpen, handleSyncCart]);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>

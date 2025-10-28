@@ -41,7 +41,7 @@ class SupabaseOrderRepository
 {
   protected tableName = "orders";
 
-  protected toCamelCase(rawOrder: RawOrder): Order {
+  protected toCamelCase = (rawOrder: RawOrder): Order => {
     const {
       created_at,
       order_items,
@@ -80,7 +80,7 @@ class SupabaseOrderRepository
       orderNote: order_note,
       status: validatedStatus,
     };
-  }
+  };
 
   async create(data: CreateOrderPayload): Promise<Order> {
     const { items, ...orderData } = data;

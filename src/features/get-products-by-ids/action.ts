@@ -6,6 +6,8 @@ import { handleServerError } from "@/shared/lib/errors/error-handler";
 import { PublicProductSchema } from "@/entities/product";
 import type { GetProductsByIdsActionResponse } from "./types";
 
+// Схема для валідації вхідних даних
+const InputSchema = z.array(z.uuid());
 const ResponseSchema = z.array(PublicProductSchema);
 
 /**
@@ -17,13 +19,16 @@ export async function getProductsByIdsAction(
   productIds: string[],
 ): Promise<GetProductsByIdsActionResponse> {
   try {
+    // Валідуємо вхідні дані
+    const validatedProductIds = InputSchema.parse(productIds);
+
     // Якщо ID не передано, повертаємо порожній масив
-    if (productIds.length === 0) {
+    if (validatedProductIds.length === 0) {
       return { success: true, data: [] };
     }
 
     const productRepository = await getProductRepository();
-    const products = await productRepository.getByIds(productIds);
+    const products = await productRepository.getByIds(validatedProductIds);
 
     // Валідуємо дані перед відправкою на клієнт
     const validatedProducts = ResponseSchema.parse(products);
