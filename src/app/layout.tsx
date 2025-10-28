@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/widgets/header/ui/Header";
 import { ThemeProvider, ThemeScript } from "@/shared/ui/theme";
 import { HydrationProvider } from "@/shared/lib/hydration/HydrationProvider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,7 @@ export default function RootLayout({
           <ThemeProvider>
             <Header />
             <main className="flex-1">{children}</main>
+            <SpeedInsights />
           </ThemeProvider>
         </HydrationProvider>
       </body>
