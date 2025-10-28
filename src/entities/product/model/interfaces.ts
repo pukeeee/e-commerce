@@ -1,4 +1,5 @@
 import { Product } from "./types";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * @description Інтерфейс для репозиторію товарів (Контракт).
@@ -12,17 +13,17 @@ export interface IProductRepository {
    * @method getProducts
    * @description Отримує список усіх активних товарів.
    */
-  getProducts(): Promise<Product[]>;
+  getProducts(supabase: SupabaseClient): Promise<Product[]>;
 
   /**
    * @method getById
    * @description Отримує товар за його ID. Повертає null, якщо не знайдено.
    */
-  getById(id: string): Promise<Product | null>;
+  getById(supabase: SupabaseClient, id: string): Promise<Product | null>;
 
   /**
    * @method getByIds
    * @description Отримує список товарів за їх ID.
    */
-  getByIds(ids: string[]): Promise<Product[]>;
+  getByIds(supabase: SupabaseClient, ids: string[]): Promise<Product[]>;
 }

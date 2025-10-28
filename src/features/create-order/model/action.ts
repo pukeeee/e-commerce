@@ -7,6 +7,7 @@ import {
 } from "@/entities/order";
 import { orderRepository } from "@/shared/api/repositories/order.repository";
 import { handleServerError } from "@/shared/lib/errors/error-handler";
+import { createClient } from "@/shared/api/supabase/server";
 
 export const createOrderAction = async (orderData: CreateOrderPayload) => {
   const validationResult = CreateOrderPayloadSchema.safeParse(orderData);
@@ -21,7 +22,11 @@ export const createOrderAction = async (orderData: CreateOrderPayload) => {
   }
 
   try {
-    const newOrder = await orderRepository.create(validationResult.data);
+    const supabase = await createClient();
+    const newOrder = await orderRepository.create(
+      supabase,
+      validationResult.data,
+    );
 
     return {
       success: true as const,

@@ -5,6 +5,7 @@ import { productRepository } from "@/shared/api/repositories/product.repository"
 import { handleServerError } from "@/shared/lib/errors/error-handler";
 import { PublicProductSchema } from "@/entities/product";
 import type { GetProductsByIdsActionResponse } from "./types";
+import { createClient } from "@/shared/api/supabase/server";
 
 // Схема для валідації вхідних даних
 const InputSchema = z.array(z.uuid());
@@ -27,7 +28,11 @@ export async function getProductsByIdsAction(
       return { success: true, data: [] };
     }
 
-    const products = await productRepository.getByIds(validatedProductIds);
+    const supabase = await createClient();
+    const products = await productRepository.getByIds(
+      supabase,
+      validatedProductIds,
+    );
 
     // Валідуємо дані перед відправкою на клієнт
     const validatedProducts = ResponseSchema.parse(products);

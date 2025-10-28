@@ -1,4 +1,4 @@
-import { createClient } from "@/shared/api/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Product, IProductRepository } from "@/entities/product";
 import { CACHE_TAGS, createCachedFunction } from "@/shared/lib/cache";
 import { CACHE_TIMES } from "@/shared/config/constants";
@@ -28,8 +28,9 @@ const mapProduct = (raw: RawProduct): Product => ({
 
 // --- Функції для отримання даних (некешовані) ---
 
-async function getProductsUncached(): Promise<Product[]> {
-  const supabase = await createClient();
+async function getProductsUncached(
+  supabase: SupabaseClient,
+): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
     .select("*")
@@ -43,8 +44,10 @@ async function getProductsUncached(): Promise<Product[]> {
   return data.map(mapProduct);
 }
 
-async function getByIdUncached(id: string): Promise<Product | null> {
-  const supabase = await createClient();
+async function getByIdUncached(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<Product | null> {
   const { data, error } = await supabase
     .from("products")
     .select("*")
@@ -59,11 +62,13 @@ async function getByIdUncached(id: string): Promise<Product | null> {
   return mapProduct(data);
 }
 
-async function getByIdsUncached(ids: string[]): Promise<Product[]> {
+async function getByIdsUncached(
+  supabase: SupabaseClient,
+  ids: string[],
+): Promise<Product[]> {
   if (ids.length === 0) {
     return [];
   }
-  const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
     .select("*")
@@ -79,26 +84,31 @@ async function getByIdsUncached(ids: string[]): Promise<Product[]> {
 
 // --- Кешовані версії функцій ---
 
-const getProducts = createCachedFunction(
-  getProductsUncached,
-  [CACHE_TAGS.products],
-  {
-    revalidate: CACHE_TIMES.PRODUCTS,
-    tags: [CACHE_TAGS.products],
-  },
-);
+const getProducts = (supabase: SupabaseClient) =>
+  createCachedFunction(
+    () => getProductsUncached(supabase),
+    [CACHE_TAGS.products],
+    {
+      revalidate: CACHE_TIMES.PRODUCTS,
+      tags: [CACHE_TAGS.products],
+    },
+  )();
 
-const getById = (id: string) =>
-  createCachedFunction(() => getByIdUncached(id), [CACHE_TAGS.product(id)], {
-    revalidate: CACHE_TIMES.PRODUCT_DETAIL,
-    tags: [CACHE_TAGS.products, CACHE_TAGS.product(id)],
-  })();
+const getById = (supabase: SupabaseClient, id: string) =>
+  createCachedFunction(
+    () => getByIdUncached(supabase, id),
+    [CACHE_TAGS.product(id)],
+    {
+      revalidate: CACHE_TIMES.PRODUCT_DETAIL,
+      tags: [CACHE_TAGS.products, CACHE_TAGS.product(id)],
+    },
+  )();
 
-const getByIds = (ids: string[]) => {
+const getByIds = (supabase: SupabaseClient, ids: string[]) => {
   // Сортуємо ID, щоб ключ кешу був консистентним незалежно від порядку
   const sortedIds = [...ids].sort();
   return createCachedFunction(
-    () => getByIdsUncached(sortedIds),
+    () => getByIdsUncached(supabase, sortedIds),
     [CACHE_TAGS.products, "by-ids", ...sortedIds],
     {
       revalidate: CACHE_TIMES.PRODUCTS,

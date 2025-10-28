@@ -1,4 +1,3 @@
-import { createClient } from "@/shared/api/supabase/server";
 import type {
   CreateOrderPayload,
   Order,
@@ -12,6 +11,7 @@ import {
 import { CACHE_TAGS, createCachedFunction } from "@/shared/lib/cache";
 import { CACHE_TIMES } from "@/shared/config/constants";
 import { handleSupabaseError } from "@/shared/lib/errors/supabase-error-handler";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 // --- Типи та маппери ---
 
@@ -54,8 +54,10 @@ const mapOrder = (rawOrder: RawOrder): Order => {
 
 // --- Функції репозиторію ---
 
-async function create(data: CreateOrderPayload): Promise<Order> {
-  const supabase = await createClient();
+async function create(
+  supabase: SupabaseClient,
+  data: CreateOrderPayload,
+): Promise<Order> {
   const { items, ...orderData } = data;
 
   const rpcPayload = {
@@ -89,8 +91,10 @@ async function create(data: CreateOrderPayload): Promise<Order> {
   return mapOrder(newOrder as unknown as RawOrder);
 }
 
-async function getByIdUncached(id: string): Promise<Order | null> {
-  const supabase = await createClient();
+async function getByIdUncached(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<Order | null> {
   const { data, error } = await supabase
     .from("orders")
     .select("*, order_items(*)")
@@ -106,11 +110,15 @@ async function getByIdUncached(id: string): Promise<Order | null> {
 
 // --- Кешована версія getById ---
 
-const getById = (id: string) =>
-  createCachedFunction(() => getByIdUncached(id), [CACHE_TAGS.order(id)], {
-    revalidate: CACHE_TIMES.ORDERS,
-    tags: [CACHE_TAGS.orders, CACHE_TAGS.order(id)],
-  })();
+const getById = (supabase: SupabaseClient, id: string) =>
+  createCachedFunction(
+    () => getByIdUncached(supabase, id),
+    [CACHE_TAGS.order(id)],
+    {
+      revalidate: CACHE_TIMES.ORDERS,
+      tags: [CACHE_TAGS.orders, CACHE_TAGS.order(id)],
+    },
+  )();
 
 // --- Експортований репозиторій ---
 
