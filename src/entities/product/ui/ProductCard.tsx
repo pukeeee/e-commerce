@@ -5,6 +5,7 @@ import { formatPrice } from "@/shared/lib/utils";
 interface ProductCardProps {
   product: PublicProduct;
   actionSlot?: React.ReactNode;
+  priority?: boolean;
 }
 
 /**
@@ -13,7 +14,7 @@ interface ProductCardProps {
  * @param product Дані про товар.
  * @param actionSlot Слот для кнопки дії (наприклад, "Додати в кошик").
  */
-export function ProductCard({ product, actionSlot }: ProductCardProps) {
+export function ProductCard({ product, actionSlot, priority }: ProductCardProps) {
   return (
     <div
       className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-sm
@@ -25,9 +26,10 @@ export function ProductCard({ product, actionSlot }: ProductCardProps) {
             src={product.imageUrl}
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            priority // Можна додати для перших кількох товарів для LCP
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
+            className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground">

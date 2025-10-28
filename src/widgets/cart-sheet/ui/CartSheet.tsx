@@ -115,14 +115,12 @@ export const CartSheet = () => {
         </SheetHeader>
 
         {isSyncing ? (
-          <div className="my-4 flex-1 divide-y overflow-y-auto px-6">
-            <CartItemSkeleton />
-            <CartItemSkeleton />
+          <div className="flex-1 divide-y overflow-y-auto px-6">
             <CartItemSkeleton />
           </div>
         ) : (
           <>
-            <div className="my-4 flex-1 overflow-y-auto px-6">
+            <div className="flex-1 overflow-y-auto px-6">
               <CartItemsList />
             </div>
             <SheetFooter className="px-6 py-4">

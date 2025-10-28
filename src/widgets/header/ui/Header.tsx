@@ -44,7 +44,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/75 backdrop-blur-sm">
       <div className="container relative mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {isMobile ? (
           <>

@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
+    // Вказуємо Next.js, що ми використовуємо кастомний завантажувач.
+    loader: "custom",
+    // Вказуємо шлях до файлу з логікою нашого завантажувача.
+    loaderFile: "./src/shared/lib/image-loader.ts",
   },
 };
 

@@ -39,8 +39,9 @@ export const CartItemCard = ({
           src={imageUrl}
           alt={item.name}
           fill
-          className="object-cover"
+          className="object-cover object-center"
           sizes="96px"
+          loading="lazy"
         />
       </div>
 

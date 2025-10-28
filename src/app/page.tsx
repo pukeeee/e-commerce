@@ -1,32 +1,36 @@
 import { getProductsAction } from "@/features/get-products/action";
 import { ProductGrid } from "@/widgets/catalog/ui/Catalog";
 import { ErrorMessage } from "@/shared/ui/error-message";
+import { Suspense } from "react";
+import { ProductGridSkeleton } from "@/shared/ui/skeleton";
 
-export default async function HomePage() {
+async function Products() {
   const result = await getProductsAction();
 
-  // Спочатку обробляємо випадок помилки
   if (!result.success) {
     return (
-      <main className="py-8">
-        <div className="container mx-auto flex h-[60vh] items-center justify-center px-4 sm:px-6 lg:px-8">
-          <ErrorMessage
-            title="Не вдалося завантажити товари"
-            message={result.error.message}
-            className="mx-auto max-w-md"
-          />
-        </div>
-      </main>
+      <div className="flex h-[60vh] items-center justify-center">
+        <ErrorMessage
+          title="Не вдалося завантажити товари"
+          message={result.error.message}
+          className="mx-auto max-w-md"
+        />
+      </div>
     );
   }
+  return <ProductGrid products={result.data} />;
+}
 
+export default async function HomePage() {
   return (
     <main className="py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
           Наші товари
         </h1>
-        <ProductGrid products={result.data} />
+        <Suspense fallback={<ProductGridSkeleton />}>
+          <Products />
+        </Suspense>
       </div>
     </main>
   );
