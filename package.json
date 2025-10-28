@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npm install --os=linux --cpu=x64 sharp && next build --turbopack",
+    "build": "rm -rf node_modules/sharp && npm install --os=linux --cpu=x64 sharp && next build --turbopack",
     "start": "next start",
     "lint": "eslint"
   },
