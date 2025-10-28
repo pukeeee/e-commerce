@@ -2,7 +2,7 @@ import { getProductsAction } from "@/features/get-products/action";
 import { ProductGrid } from "@/widgets/catalog/ui/Catalog";
 import { ErrorMessage } from "@/shared/ui/error-message";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // 60 хв
 
 export default async function HomePage() {
   const result = await getProductsAction();
