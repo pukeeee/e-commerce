@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { getProductRepository } from "@/shared/api/repositories/product.repository";
+import { productRepository } from "@/shared/api/repositories/product.repository";
 import { handleServerError } from "@/shared/lib/errors/error-handler";
 import { PublicProductSchema } from "@/entities/product";
 import type { GetProductsByIdsActionResponse } from "./types";
@@ -27,7 +27,6 @@ export async function getProductsByIdsAction(
       return { success: true, data: [] };
     }
 
-    const productRepository = await getProductRepository();
     const products = await productRepository.getByIds(validatedProductIds);
 
     // Валідуємо дані перед відправкою на клієнт

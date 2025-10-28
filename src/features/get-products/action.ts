@@ -1,6 +1,6 @@
-'use server';
+"use server";
 
-import { getProductRepository } from "@/shared/api/repositories/product.repository";
+import { productRepository } from "@/shared/api/repositories/product.repository";
 import { handleServerError } from "@/shared/lib/errors/error-handler";
 import { PublicProductSchema } from "@/entities/product";
 import { z } from "zod";
@@ -15,7 +15,6 @@ const GetProductsActionResponseSchema = z.array(PublicProductSchema);
  */
 export async function getProductsAction(): Promise<GetProductsActionResponse> {
   try {
-    const productRepository = await getProductRepository();
     const products = await productRepository.getProducts();
 
     // Валідуємо дані перед відправкою на клієнт, щоб переконатись,

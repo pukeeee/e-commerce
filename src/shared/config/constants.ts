@@ -37,7 +37,7 @@ export const VALIDATION_LIMITS = {
 } as const;
 
 export const CACHE_TIMES = {
-  PRODUCTS: 60 * 5, // 5 хвилин
-  PRODUCT_DETAIL: 60 * 10, // 10 хвилин
-  ORDERS: 60, // 1 хвилина
+  PRODUCTS: 60 * 60, // 60 хвилин
+  PRODUCT_DETAIL: 60 * 60, // 60 хвилин
+  ORDERS: 60 * 10, // 10 хвилин
 } as const;

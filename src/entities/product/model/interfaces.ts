@@ -11,15 +11,18 @@ export interface IProductRepository {
   /**
    * @method getProducts
    * @description Отримує список усіх активних товарів.
-   * @returns {Promise<Product[]>} Проміс, що повертає масив товарів.
    */
   getProducts(): Promise<Product[]>;
 
   /**
    * @method getById
-   * @description Отримує товар за його унікальним ідентифікатором.
-   * @param {string} id - Ідентифікатор товару.
-   * @returns {Promise<Product>} Проміс, що повертає товар.
+   * @description Отримує товар за його ID. Повертає null, якщо не знайдено.
    */
-  getById(id: string): Promise<Product>;
+  getById(id: string): Promise<Product | null>;
+
+  /**
+   * @method getByIds
+   * @description Отримує список товарів за їх ID.
+   */
+  getByIds(ids: string[]): Promise<Product[]>;
 }

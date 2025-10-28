@@ -1,7 +1,8 @@
 import { createClient } from "@/shared/api/supabase/server";
 import type { Product, IProductRepository } from "@/entities/product";
-import { cache } from "react";
-import { BaseRepository } from "./base.repository";
+import { CACHE_TAGS, createCachedFunction } from "@/shared/lib/cache";
+import { CACHE_TIMES } from "@/shared/config/constants";
+import { handleSupabaseError } from "@/shared/lib/errors/supabase-error-handler";
 
 // Проміжний тип для сирих даних з Supabase, оскільки поля в БД у snake_case
 type RawProduct = {
@@ -14,89 +15,102 @@ type RawProduct = {
   is_active: boolean;
 };
 
-/**
- * @class SupabaseProductRepository
- * @description Реалізація репозиторію товарів для роботи з Supabase.
- * @implements {IProductRepository}
- */
-class SupabaseProductRepository
-  extends BaseRepository<Product, RawProduct>
-  implements IProductRepository
-{
-  protected tableName = "products";
+// Функція для перетворення даних з snake_case (БД) в camelCase (доменна модель)
+const mapProduct = (raw: RawProduct): Product => ({
+  id: raw.id,
+  createdAt: raw.created_at,
+  name: raw.name,
+  description: raw.description ?? undefined,
+  price: raw.price,
+  imageUrl: raw.image_url ?? undefined,
+  isActive: raw.is_active,
+});
 
-  protected toCamelCase = (raw: RawProduct): Product => {
-    return {
-      id: raw.id,
-      createdAt: raw.created_at,
-      name: raw.name,
-      description: raw.description ?? undefined,
-      price: raw.price,
-      imageUrl: raw.image_url ?? undefined,
-      isActive: raw.is_active,
-    };
-  };
+// --- Функції для отримання даних (некешовані) ---
 
-  /**
-   * @method getProducts
-   * @description Отримує список усіх активних товарів з бази даних.
-   */
-  async getProducts(): Promise<Product[]> {
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+async function getProductsUncached(): Promise<Product[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
 
-    if (error) this.handleError(error, "Не вдалося завантажити товари");
-
-    return data.map(this.toCamelCase);
+  if (error) {
+    handleSupabaseError(error, { tableName: "products" });
   }
 
-  /**
-   * @method getById
-   * @description Отримує один товар за його ID. Кидає помилку, якщо не знайдено.
-   */
-  async getById(id: string): Promise<Product> {
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) this.handleError(error);
-    return this.toCamelCase(data);
-  }
-
-  /**
-   * @method getByIds
-   * @description Отримує список товарів за їх ID.
-   */
-  async getByIds(ids: string[]): Promise<Product[]> {
-    if (ids.length === 0) {
-      return [];
-    }
-
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select("*")
-      .in("id", ids) // Використовуємо метод .in() для фільтрації за масивом ID
-      .eq("is_active", true);
-
-    if (error)
-      this.handleError(error, "Не вдалося завантажити товари за списком ID");
-
-    return data.map(this.toCamelCase);
-  }
+  return data.map(mapProduct);
 }
 
-// Фабрика для створення репозиторію.
-// Вона асинхронна, бо createClient() асинхронний.
-const createRepo = async () => {
+async function getByIdUncached(id: string): Promise<Product | null> {
   const supabase = await createClient();
-  return new SupabaseProductRepository(supabase);
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null; // Not found is not an error
+    handleSupabaseError(error, { tableName: "products" });
+  }
+
+  return mapProduct(data);
+}
+
+async function getByIdsUncached(ids: string[]): Promise<Product[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .in("id", ids)
+    .eq("is_active", true);
+
+  if (error) {
+    handleSupabaseError(error, { tableName: "products" });
+  }
+
+  return data.map(mapProduct);
+}
+
+// --- Кешовані версії функцій ---
+
+const getProducts = createCachedFunction(
+  getProductsUncached,
+  [CACHE_TAGS.products],
+  {
+    revalidate: CACHE_TIMES.PRODUCTS,
+    tags: [CACHE_TAGS.products],
+  },
+);
+
+const getById = (id: string) =>
+  createCachedFunction(() => getByIdUncached(id), [CACHE_TAGS.product(id)], {
+    revalidate: CACHE_TIMES.PRODUCT_DETAIL,
+    tags: [CACHE_TAGS.products, CACHE_TAGS.product(id)],
+  })();
+
+const getByIds = (ids: string[]) => {
+  // Сортуємо ID, щоб ключ кешу був консистентним незалежно від порядку
+  const sortedIds = [...ids].sort();
+  return createCachedFunction(
+    () => getByIdsUncached(sortedIds),
+    [CACHE_TAGS.products, "by-ids", ...sortedIds],
+    {
+      revalidate: CACHE_TIMES.PRODUCTS,
+      tags: [CACHE_TAGS.products, ...sortedIds.map(CACHE_TAGS.product)],
+    },
+  )();
 };
 
-// Кешований getter. Це те, що буде використовуватись у додатку.
-// cache() гарантує, що createRepo() виконається лише один раз за запит.
-export const getProductRepository = cache(createRepo);
+// --- Експортований репозиторій ---
+
+export const productRepository: IProductRepository = {
+  getProducts: getProducts,
+  getById: getById,
+  getByIds: getByIds,
+};

@@ -5,7 +5,7 @@ import {
   CreateOrderPayloadSchema,
   type CreateOrderPayload,
 } from "@/entities/order";
-import { getOrderRepository } from "@/shared/api/repositories/order.repository";
+import { orderRepository } from "@/shared/api/repositories/order.repository";
 import { handleServerError } from "@/shared/lib/errors/error-handler";
 
 export const createOrderAction = async (orderData: CreateOrderPayload) => {
@@ -21,7 +21,6 @@ export const createOrderAction = async (orderData: CreateOrderPayload) => {
   }
 
   try {
-    const orderRepository = await getOrderRepository();
     const newOrder = await orderRepository.create(validationResult.data);
 
     return {
