@@ -41,3 +41,7 @@ export const CACHE_TIMES = {
   PRODUCT_DETAIL: 60 * 60, // 60 хвилин
   ORDERS: 60 * 10, // 10 хвилин
 } as const;
+
+export const DEBOUNCE = {
+  DELAY: 500,
+};
