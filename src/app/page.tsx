@@ -3,6 +3,21 @@ import { ProductGrid } from "@/widgets/catalog/ui/Catalog";
 import { ErrorMessage } from "@/shared/ui/error-message";
 import { Suspense } from "react";
 import { ProductGridSkeleton } from "@/shared/ui/skeleton";
+import { Metadata } from "next";
+
+// Вмикаємо ISR (Incremental Static Regeneration)
+export const revalidate = 3600;
+
+// Генерація метаданих
+export const metadata: Metadata = {
+  title: "Каталог товарів | Крамниця",
+  description: "Широкий вибір якісних товарів за найкращими цінами",
+  openGraph: {
+    title: "Каталог товарів | Крамниця",
+    description: "Широкий вибір якісних товарів за найкращими цінами",
+    type: "website",
+  },
+};
 
 async function Products() {
   const result = await getProductsAction();

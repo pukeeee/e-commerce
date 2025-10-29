@@ -14,7 +14,11 @@ interface ProductCardProps {
  * @param product Дані про товар.
  * @param actionSlot Слот для кнопки дії (наприклад, "Додати в кошик").
  */
-export function ProductCard({ product, actionSlot, priority }: ProductCardProps) {
+export function ProductCard({
+  product,
+  actionSlot,
+  priority,
+}: ProductCardProps) {
   return (
     <div
       className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-sm
@@ -26,10 +30,15 @@ export function ProductCard({ product, actionSlot, priority }: ProductCardProps)
             src={product.imageUrl}
             alt={product.name}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={priority}
-            loading={priority ? undefined : "lazy"}
-            className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
+            loading={priority ? "eager" : "lazy"}
+            // Використовуємо placeholder для покращення UX
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI2YzZjRmNiIvPjwvc3ZnPg=="
+            className="object-cover object-center transition-transform duration-300 group-hover:scale-105 bg-muted"
+            // Якість для основних зображень
+            quality={75}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground">

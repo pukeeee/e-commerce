@@ -37,11 +37,16 @@ export const VALIDATION_LIMITS = {
 } as const;
 
 export const CACHE_TIMES = {
-  PRODUCTS: 60 * 60, // 60 хвилин
-  PRODUCT_DETAIL: 60 * 60, // 60 хвилин
-  ORDERS: 60 * 10, // 10 хвилин
+  // --- Серверне кешування (в секундах, для Next.js revalidate) ---
+  PRODUCTS: 60 * 60, // 3600 секунд (1 година)
+  PRODUCT_DETAIL: 60 * 60, // 3600 секунд (1 година)
+  ORDERS: 60 * 10, // 600 секунд (10 хвилин)
+
+  // --- Клієнтська логіка (в мілісекундах, для Date.now()) ---
+  SYNC_INTERVAL: 5 * 60 * 1000, // 300 000 мілісекунд (5 хвилин)
 } as const;
 
 export const DEBOUNCE = {
-  DELAY: 500,
+  // --- Клієнтська логіка (в мілісекундах, для setTimeout) ---
+  DELAY: 500, // 500 мілісекунд
 };

@@ -7,19 +7,48 @@ interface ImageLoaderProps {
 }
 
 /**
- * @name imageLoader
- * @description Формує URL для нашого API оптимізації зображень.
- * @param {ImageLoaderProps} { src, width, quality }
- * @returns {string} URL для API-маршруту.
+ * Оптимізований завантажувач зображень для Supabase Storage.
+ * Використовує вбудований Image Transformation API.
+ * @see https://supabase.com/docs/guides/storage/serving/image-transformations
  */
 export default function imageLoader({
   src,
   width,
-  quality,
+  quality = 80,
 }: ImageLoaderProps): string {
-  // Формуємо URL, що вказує на наш власний API.
-  // encodeURIComponent(src) - обов'язково, щоб URL картинки був безпечно переданий.
-  return `/api/image?url=${encodeURIComponent(src)}&w=${width}&q=${
-    quality || 75
-  }`;
+  // Перевіряємо, чи це URL зі Supabase Storage
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "url";
+
+  if (!src.startsWith(supabaseUrl)) {
+    // Якщо це не URL від Supabase, повертаємо як є
+    return src;
+  }
+
+  try {
+    const url = new URL(src);
+
+    // Перевіряємо, чи це публічний bucket
+    if (url.pathname.includes("/storage/v1/object/public/")) {
+      // Замінюємо /object/public/ на /render/image/public/
+      const transformPath = url.pathname.replace(
+        "/storage/v1/object/public/",
+        "/storage/v1/render/image/public/",
+      );
+
+      // Додаємо параметри трансформації
+      const params = new URLSearchParams({
+        width: width.toString(),
+        quality: quality.toString(),
+        resize: "contain", // або 'cover', 'fill'
+        // format: 'webp', // Supabase автоматично визначає найкращий формат
+      });
+
+      return `${url.origin}${transformPath}?${params.toString()}`;
+    }
+  } catch (error) {
+    console.error("Error transforming image URL:", error);
+  }
+
+  // Fallback на оригінальний URL
+  return src;
 }

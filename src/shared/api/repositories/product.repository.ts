@@ -87,7 +87,7 @@ async function getByIdsUncached(
 const getProducts = (supabase: SupabaseClient) =>
   createCachedFunction(
     () => getProductsUncached(supabase),
-    [CACHE_TAGS.products],
+    [CACHE_TAGS.products, "all"],
     {
       revalidate: CACHE_TIMES.PRODUCTS,
       tags: [CACHE_TAGS.products],
@@ -109,7 +109,7 @@ const getByIds = (supabase: SupabaseClient, ids: string[]) => {
   const sortedIds = [...ids].sort();
   return createCachedFunction(
     () => getByIdsUncached(supabase, sortedIds),
-    [CACHE_TAGS.products, "by-ids", ...sortedIds],
+    [CACHE_TAGS.products, "batch", ...sortedIds],
     {
       revalidate: CACHE_TIMES.PRODUCTS,
       tags: [CACHE_TAGS.products, ...sortedIds.map(CACHE_TAGS.product)],
