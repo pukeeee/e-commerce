@@ -32,12 +32,6 @@ export const CartSummary = () => {
         <span>Разом:</span>
         <span>{formatPrice(total)}</span>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <ClearCartButton />
-        <Button asChild className="w-full">
-          <Link href="/checkout">Оформити</Link>
-        </Button>
-      </div>
     </div>
   );
 };
