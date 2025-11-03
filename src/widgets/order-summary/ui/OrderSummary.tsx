@@ -7,24 +7,19 @@ import { CartItemsList } from "@/widgets/cart-sheet/ui/CartItemsList";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
 import { formatPrice } from "@/shared/lib/utils";
-import { useFormStatus } from "react-dom";
+import { SubmitButton } from "@/features/create-order/ui/SubmitButton";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/shared/ui/accordion";
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button
-      type="submit"
-      form="order-form" // Зв'язуємо кнопку з формою
-      className="w-full"
-      disabled={pending}
-    >
-      {pending ? "Обробка..." : "Оформити замовлення"}
-    </Button>
-  );
+interface OrderSummaryProps {
+  isPending?: boolean;
 }
 
-export function OrderSummary() {
+export function OrderSummary({ isPending = false }: OrderSummaryProps) {
   const items = useCart((state) => state.items);
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState("");
@@ -45,10 +40,22 @@ export function OrderSummary() {
 
   return (
     <div className="flex flex-col">
-      <div className="max-h-[400px] overflow-y-auto pr-2">
-        <CartItemsList />
-      </div>
-      <div className="mt-6 space-y-4 border-t pt-6">
+      <Accordion
+        type="single"
+        collapsible
+        className="w-full"
+        // defaultValue="item-1"
+      >
+        <AccordionItem value="item-1">
+          <AccordionTrigger>Товари</AccordionTrigger>
+          <AccordionContent>
+            <div className="max-h-[330px] overflow-y-auto pr-2">
+              <CartItemsList />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+      <div className="space-y-4 border-t pt-6">
         <p className="text-lg font-medium">Підсумок</p>
 
         {/* Промокод */}
@@ -96,7 +103,7 @@ export function OrderSummary() {
         </div>
 
         <div className="mt-6">
-          <SubmitButton />
+          <SubmitButton isPending={isPending} />
         </div>
       </div>
     </div>

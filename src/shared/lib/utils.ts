@@ -11,9 +11,12 @@ export function cn(...inputs: ClassValue[]) {
  * @returns {string} - Відформатований рядок ціни (наприклад, "1 250,50 ₴").
  */
 export const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat("uk-UA", {
+  const priceString = new Intl.NumberFormat("uk-UA", {
     style: "currency",
     currency: "UAH",
     minimumFractionDigits: 2,
   }).format(price);
+
+  // Замінюємо символ, який може відрізнятися, на гарантований 'грн'
+  return priceString.replace("₴", "грн");
 };

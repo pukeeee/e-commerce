@@ -5,12 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import React, { useEffect } from "react";
 
-import { useCart } from "@/entities/cart";
+import { useCart, type CartItem } from "@/entities/cart"; // ✅ Імпортуємо тип CartItem
 import {
   CreateOrderPayloadSchema,
   PaymentMethodEnum,
   PaymentMethodLabels,
-  type CreateOrderPayload,
 } from "@/entities/order";
 import { useOrderCreate } from "../model/useOrderCreate";
 
@@ -26,21 +25,17 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import { ErrorMessage } from "@/shared/ui/error-message";
+import { PhoneInput } from "@/shared/ui/PhoneInput";
 
-// Виводимо тип на основі схеми Zod
 type OrderFormValues = z.infer<typeof CreateOrderPayloadSchema>;
 
 export function OrderForm() {
+  // ✅ Правильно отримуємо потрібні частини стану
   const items = useCart((state) => state.items);
   const clearCart = useCart((state) => state.clear);
-  // Цей хук з check.md ми поки не чіпаємо, він працює як треба
-  const { createOrder, isPending, state } = useOrderCreate();
 
-  // 1. Ініціалізуємо форму за допомогою react-hook-form
   const form = useForm<OrderFormValues>({
-    // 2. Підключаємо валідатор Zod
     resolver: zodResolver(CreateOrderPayloadSchema),
-    // 3. Встановлюємо значення за замовчуванням
     defaultValues: {
       customerName: "",
       customerEmail: "",
@@ -48,57 +43,64 @@ export function OrderForm() {
       shippingAddress: "",
       orderNote: "",
       paymentMethod: "cash_on_delivery",
-      // Ці поля не є частиною форми, але потрібні для схеми
       items: [],
       totalAmount: 0,
     },
   });
 
+  // ✅ Деструктуруємо стабільні методи, щоб безпечно їх використовувати в залежностях
+  const { reset, setError, setValue } = form;
+
+  const { createOrder, isPending, state } = useOrderCreate({
+    onSuccess: () => {
+      clearCart();
+    },
+  });
+
+  // ✅ Правильний useEffect для синхронізації кошика з формою
+  useEffect(() => {
+    const orderItems = Object.values(items).map((item: CartItem) => ({
+      productId: item.id,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    const newTotalAmount = orderItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+
+    setValue("items", orderItems);
+    setValue("totalAmount", newTotalAmount);
+  }, [items, setValue]); // ✅ Правильні та стабільні залежності
+
+  // ✅ useEffect для помилок сервера з виправленими залежностями
   useEffect(() => {
     if (state.fieldErrors) {
       for (const [fieldName, errors] of Object.entries(state.fieldErrors)) {
         if (errors && errors.length > 0) {
-          form.setError(fieldName as keyof OrderFormValues, {
+          setError(fieldName as keyof OrderFormValues, {
             type: "server",
             message: errors.join(", "),
           });
         }
       }
     }
-  }, [state.fieldErrors, form]);
+  }, [state.fieldErrors, setError]); // ✅ Правильні та стабільні залежності
 
-  // 4. Функція, що викликається при успішній валідації
-  async function onSubmit(data: OrderFormValues) {
-    const orderItems = Object.values(items).map((item) => ({
-      productId: item.id,
-      quantity: item.quantity,
-      price: item.price,
-    }));
-
-    const totalAmount = orderItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0,
-    );
-
-    // Створюємо повний payload
-    const payload: CreateOrderPayload = {
-      ...data,
-      items: orderItems,
-      totalAmount,
-    };
-
-    // Викликаємо server action з даними з форми та кошика
-    await createOrder(payload);
-
-    // Логіка очищення кошика залишається
-    if (!state.serverError && !state.fieldErrors) {
-      // Можливо, варто перевіряти на успіх, а не на відсутність помилок
-      clearCart();
+  // ✅ Ефект для очищення форми після успішного замовлення
+  useEffect(() => {
+    if (state.isSuccess) {
+      reset();
     }
+  }, [state.isSuccess, reset]);
+
+  // ✅ Функція onSubmit тепер чиста - вона просто відправляє дані
+  async function onSubmit(data: OrderFormValues) {
+    await createOrder(data);
   }
 
   return (
-    // 5. Обгортаємо все в компонент Form від shadcn
     <Form {...form}>
       <form
         id="order-form"
@@ -107,7 +109,7 @@ export function OrderForm() {
       >
         {state.serverError && <ErrorMessage message={state.serverError} />}
 
-        {/* Кожне поле тепер обгорнуте в FormField */}
+        {/* ...решта полів форми без змін... */}
         <FormField
           control={form.control}
           name="customerName"
@@ -158,11 +160,7 @@ export function OrderForm() {
                 Телефон <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
-                <Input
-                  placeholder="+380991234567"
-                  {...field}
-                  disabled={isPending}
-                />
+                <PhoneInput {...field} disabled={isPending} />
               </FormControl>
               <FormMessage />
             </FormItem>

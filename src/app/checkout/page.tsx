@@ -1,5 +1,5 @@
 import { OrderForm } from "@/features/create-order/ui/OrderForm";
-import { OrderSummary } from "@/widgets/order-summary";
+import { OrderSummaryContainer } from "@/widgets/order-summary";
 
 export default function CheckoutPage() {
   return (
@@ -20,8 +20,8 @@ export default function CheckoutPage() {
 
         {/* Права колонка: Склад замовлення */}
         <div className="min-w-0 rounded-lg border bg-card p-6 shadow-sm">
-          <h2 className="mb-6 text-2xl font-semibold">Ваше замовлення</h2>
-          <OrderSummary />
+          <h2 className="mb-2 text-2xl font-semibold">Ваше замовлення</h2>
+          <OrderSummaryContainer />
         </div>
       </div>
     </main>

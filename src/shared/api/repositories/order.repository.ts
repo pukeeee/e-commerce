@@ -58,23 +58,17 @@ async function create(
   supabase: SupabaseClient,
   data: CreateOrderPayload,
 ): Promise<Order> {
-  const { items, ...orderData } = data;
-
+  // Створюємо плаский payload, який очікує SQL-функція
   const rpcPayload = {
-    order_data: {
-      customer_name: orderData.customerName,
-      customer_email: orderData.customerEmail,
-      customer_phone: orderData.customerPhone,
-      total_amount: orderData.totalAmount,
-      payment_method: orderData.paymentMethod,
-      shipping_address: orderData.shippingAddress,
-      order_note: orderData.orderNote,
-    },
-    order_items: items.map((item) => ({
-      product_id: item.productId,
-      quantity: item.quantity,
-      price: item.price,
-    })),
+    customer_name: data.customerName,
+    customer_email: data.customerEmail,
+    customer_phone: data.customerPhone,
+    total_amount: data.totalAmount,
+    payment_method: data.paymentMethod,
+    shipping_address: data.shippingAddress,
+    order_note: data.orderNote,
+    // SQL-функція очікує `items` з `productId` в camelCase
+    items: data.items,
   };
 
   const { data: newOrder, error } = await supabase
