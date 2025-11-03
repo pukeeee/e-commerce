@@ -6,7 +6,7 @@ import { type CreateOrderPayload, type Order } from "@/entities/order";
 // Тип для помилок валідації полів, які повертає Zod
 type FieldErrors = Record<string, string[] | undefined>;
 
-interface UseOrderCreateState {
+export interface UseOrderCreateState {
   fieldErrors: FieldErrors | null;
   serverError: string | null;
   /** Створене замовлення, яке повертається після успішного запиту. */

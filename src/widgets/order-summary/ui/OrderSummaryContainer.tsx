@@ -1,10 +1,13 @@
 "use client";
 
-import { useOrderCreate } from "@/features/create-order/model/useOrderCreate";
 import { OrderSummary } from "./OrderSummary";
 
-export function OrderSummaryContainer() {
-  const { isPending } = useOrderCreate();
+interface OrderSummaryContainerProps {
+  isPending: boolean;
+}
 
+export function OrderSummaryContainer({
+  isPending,
+}: OrderSummaryContainerProps) {
   return <OrderSummary isPending={isPending} />;
 }

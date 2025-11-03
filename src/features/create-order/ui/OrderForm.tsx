@@ -10,8 +10,9 @@ import {
   CreateOrderPayloadSchema,
   PaymentMethodEnum,
   PaymentMethodLabels,
+  type CreateOrderPayload,
 } from "@/entities/order";
-import { useOrderCreate } from "../model/useOrderCreate";
+import type { UseOrderCreateState } from "../model/useOrderCreate";
 
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
@@ -30,10 +31,14 @@ import { LoadingOverlay } from "@/shared/ui/loading-overlay";
 
 type OrderFormValues = z.infer<typeof CreateOrderPayloadSchema>;
 
-export function OrderForm() {
-  const items = useCart((state) => state.items);
-  const clearCart = useCart((state) => state.clear);
+interface OrderFormProps {
+  isPending: boolean;
+  state: UseOrderCreateState;
+  createOrder: (payload: CreateOrderPayload) => Promise<void>;
+}
 
+export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
+  const items = useCart((state) => state.items);
   const [isDismissed, setIsDismissed] = useState(false);
 
   const form = useForm<OrderFormValues>({
@@ -51,12 +56,6 @@ export function OrderForm() {
   });
 
   const { reset, setError, setValue } = form;
-
-  const { createOrder, isPending, state } = useOrderCreate({
-    onSuccess: () => {
-      clearCart();
-    },
-  });
 
   useEffect(() => {
     const orderItems = Object.values(items).map((item: CartItem) => ({
@@ -106,17 +105,14 @@ export function OrderForm() {
 
   return (
     <div className="relative">
-      <LoadingOverlay
-        isLoading={isPending}
-        message="Створюємо замовлення..."
-      />
+      <LoadingOverlay isLoading={isPending} message="Створюємо замовлення..." />
       <Form {...form}>
         <form
           id="order-form"
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-6"
         >
-          {/* 
+          {/*
             Блок для відображення загальної помилки від сервера.
             Користувач може закрити це повідомлення, але воно з'явиться знову
             при наступній спробі відправки, якщо помилка не зникне.

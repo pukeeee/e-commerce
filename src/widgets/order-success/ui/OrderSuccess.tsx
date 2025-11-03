@@ -58,7 +58,7 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
           </Button>
 
           <Button asChild>
-            <Link href={`/orders/${order.id}`}>Переглянути замовлення</Link>
+            <Link href={`/orders/`}>Переглянути замовлення</Link>
           </Button>
         </div>
       </div>

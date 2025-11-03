@@ -6,7 +6,7 @@ import { normalizePhoneNumber } from "@/shared/lib/formatters";
  * Схема для одного товару в кошику/замовленні.
  */
 export const OrderItemSchema = z.object({
-  productId: z.string().uuid("Неправильний ID товару"),
+  productId: z.uuid("Неправильний ID товару"),
   quantity: z
     .number()
     .int()
@@ -34,10 +34,9 @@ export const CreateOrderPayloadSchema = z.object({
     ),
 
   customerEmail: z
-    .string()
+    .email("Неправильний формат електронної пошти")
     .trim()
     .toLowerCase()
-    .email("Неправильний формат електронної пошти")
     .max(255, "Email занадто довгий"),
 
   customerPhone: z
@@ -91,7 +90,7 @@ export const CreateOrderPayloadSchema = z.object({
  * Являє собою модель замовлення в базі даних.
  */
 export const OrderSchema = CreateOrderPayloadSchema.extend({
-  id: z.string().uuid(),
-  createdAt: z.string().datetime(), // Використовуємо актуальний метод
+  id: z.uuid(),
+  createdAt: z.iso.datetime(), // Використовуємо актуальний метод
   status: OrderStatusEnum.default("pending"),
 });
