@@ -44,12 +44,12 @@ export function OrderSummary({ isPending = false }: OrderSummaryProps) {
         type="single"
         collapsible
         className="w-full"
-        // defaultValue="item-1"
+        defaultValue="item-1"
       >
         <AccordionItem value="item-1">
           <AccordionTrigger>Товари</AccordionTrigger>
           <AccordionContent>
-            <div className="max-h-[330px] overflow-y-auto pr-2">
+            <div className="max-h-[320px] overflow-y-auto pr-2">
               <CartItemsList />
             </div>
           </AccordionContent>

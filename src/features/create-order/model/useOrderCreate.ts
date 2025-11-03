@@ -9,17 +9,22 @@ type FieldErrors = Record<string, string[] | undefined>;
 interface UseOrderCreateState {
   fieldErrors: FieldErrors | null;
   serverError: string | null;
-  createdOrder: Order | null; // Зберігаємо створене замовлення
+  /** Створене замовлення, яке повертається після успішного запиту. */
+  createdOrder: Order | null;
   isSuccess: boolean;
 }
 
 interface UseOrderCreateProps {
-  onSuccess?: (order: Order) => void; // Колбек отримує замовлення
+  /** Колбек, що викликається після успішного створення замовлення. */
+  onSuccess?: (order: Order) => void;
 }
 
 /**
  * Хук для керування логікою створення замовлення.
- * Використовує useTransition для асинхронних операцій без блокування UI.
+ *
+ * Використовує `useTransition` для оновлення стану без блокування інтерфейсу,
+ * дозволяючи відображати індикатор завантаження, поки триває асинхронна операція.
+ * Це покращує користувацький досвід, не "заморожуючи" сторінку.
  */
 export function useOrderCreate({ onSuccess }: UseOrderCreateProps = {}) {
   const [isPending, startTransition] = useTransition();
@@ -31,9 +36,14 @@ export function useOrderCreate({ onSuccess }: UseOrderCreateProps = {}) {
   });
 
   const createOrder = async (payload: CreateOrderPayload) => {
-    // Починаємо транзакцію (асинхронну операцію)
+    // Запобігаємо повторній відправці форми, якщо запит вже виконується.
+    if (isPending) {
+      return;
+    }
+
+    // Загортаємо асинхронний запит у `startTransition`, щоб уникнути блокування UI.
     startTransition(async () => {
-      // Скидаємо попередні помилки та результат
+      // Скидаємо стан перед кожним новим запитом, щоб очистити старі помилки.
       setState({
         fieldErrors: null,
         serverError: null,
@@ -44,7 +54,7 @@ export function useOrderCreate({ onSuccess }: UseOrderCreateProps = {}) {
 
       const result = await createOrderAction(payload);
 
-      // ✅ Додано перевірку на існування result.order
+      // Обробляємо успішне створення замовлення.
       if (result.success && result.order) {
         toast.success("Замовлення успішно створено!", { id: toastId });
         setState({
@@ -53,9 +63,10 @@ export function useOrderCreate({ onSuccess }: UseOrderCreateProps = {}) {
           createdOrder: result.order,
           isSuccess: true,
         });
-        onSuccess?.(result.order); // Тепер тут безпечно
+        // Викликаємо колбек, щоб зовнішній код міг відреагувати на успіх.
+        onSuccess?.(result.order);
       } else {
-        // Обробка помилок
+        // Обробляємо помилки, що могли виникнути під час створення замовлення.
         if ("errors" in result) {
           setState({
             fieldErrors: result.errors,
@@ -73,9 +84,8 @@ export function useOrderCreate({ onSuccess }: UseOrderCreateProps = {}) {
           });
           toast.error(`Помилка: ${result.error.message}`, { id: toastId });
         } else {
-          // Запасний варіант (включаючи випадок success: true, але без order)
-          const unknownError =
-            "Сталася невідома помилка. Спробуйте ще раз.";
+          // Обробка непередбачуваних помилок, коли структура відповіді невідома.
+          const unknownError = "Сталася невідома помилка. Спробуйте ще раз.";
           setState({
             fieldErrors: null,
             serverError: unknownError,
