@@ -1,5 +1,6 @@
 import { Product } from "./types";
 import { SupabaseClient } from "@supabase/supabase-js";
+import type { ProductFilters } from "./filter-types";
 
 /**
  * @description Інтерфейс для репозиторію товарів (Контракт).
@@ -26,4 +27,9 @@ export interface IProductRepository {
    * @description Отримує список товарів за їх ID.
    */
   getByIds(supabase: SupabaseClient, ids: string[]): Promise<Product[]>;
+
+  getProductsFiltered(
+    supabase: SupabaseClient,
+    filters: ProductFilters,
+  ): Promise<Product[]>;
 }

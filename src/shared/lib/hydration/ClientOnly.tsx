@@ -1,6 +1,6 @@
 "use client";
 
-import { useHydration } from "./HydrationProvider";
+import { useEffect, useState } from "react";
 
 interface ClientOnlyProps {
   children: React.ReactNode;
@@ -8,8 +8,13 @@ interface ClientOnlyProps {
 }
 
 export function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
-  const { isHydrated } = useHydration();
-  if (!isHydrated) {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) {
     return <>{fallback}</>;
   }
 

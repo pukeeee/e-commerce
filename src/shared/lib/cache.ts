@@ -30,4 +30,6 @@ export const CACHE_TAGS = {
   product: (id: string | number) => `product:${id}`,
   orders: "orders",
   order: (id: string | number) => `order:${id}`,
+  categories: "categories",
+  category: (slug: string) => `category:${slug}`,
 } as const;

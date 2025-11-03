@@ -4,6 +4,8 @@ import { ErrorMessage } from "@/shared/ui/error-message";
 import { Suspense } from "react";
 import { ProductGridSkeleton } from "@/shared/ui/skeleton";
 import { Metadata } from "next";
+import { CategoryGrid } from "@/widgets/category-grid/ui/CategoryGrid";
+import { getCategoriesAction } from "@/features/get-categories/model/action";
 
 // Вмикаємо ISR (Incremental Static Regeneration)
 export const revalidate = 3600;
@@ -18,6 +20,25 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
+
+async function Categories() {
+  // 1. Отримуємо об'єкт-результат
+  const result = await getCategoriesAction();
+
+  // 2. Перевіряємо, чи операція неуспішна
+  if (!result.success) {
+    // Можна повернути компонент з помилкою для користувача
+    return (
+      <ErrorMessage
+        title="Не вдалося завантажити категорії"
+        message={result.error.message}
+      />
+    );
+  }
+
+  // 3. Якщо все добре, передаємо в Grid саме result.data
+  return <CategoryGrid categories={result.data} />;
+}
 
 async function Products() {
   const result = await getProductsAction();
@@ -40,7 +61,29 @@ export default async function HomePage() {
   return (
     <main className="py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
+        {/* Hero секція */}
+        <section className="mb-16 text-center">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mb-4">
+            Техніка Apple
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Оригінальні продукти Apple з офіційною гарантією
+          </p>
+        </section>
+
+        {/* Категорії */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-bold mb-6">Категорії</h2>
+          <Suspense
+            fallback={
+              <div className="h-48 animate-pulse bg-muted rounded-lg" />
+            }
+          >
+            <Categories />
+          </Suspense>
+        </section>
+
+        <h1 className="mt-16 mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
           Наші товари
         </h1>
         <Suspense fallback={<ProductGridSkeleton />}>
