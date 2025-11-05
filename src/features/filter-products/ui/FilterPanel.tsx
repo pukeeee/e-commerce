@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Select,
   SelectContent,
@@ -16,7 +16,6 @@ import {
   type ProductFilters,
   type SortOption,
 } from "@/entities/product/model/filter-types";
-import { useDebounce } from "@/shared/hooks/use-debounce";
 
 interface FilterPanelProps {
   currentFilters: ProductFilters;
@@ -27,7 +26,6 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [search, setSearch] = useState(currentFilters.search || "");
   const [minPrice, setMinPrice] = useState(
     currentFilters.minPrice?.toString() || "",
   );
@@ -35,11 +33,8 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
     currentFilters.maxPrice?.toString() || "",
   );
 
-  // 4. Правильно використовуємо debounce
-  const debouncedSearch = useDebounce(search, 500);
-
   const updateFilters = useCallback(
-    (updates: Partial<ProductFilters>) => {
+    (updates: Partial<Omit<ProductFilters, "search">>) => {
       const params = new URLSearchParams(searchParams);
       Object.entries(updates).forEach(([key, value]) => {
         if (value === undefined || value === "" || value === null) {
@@ -48,28 +43,15 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
           params.set(key, String(value));
         }
       });
+      // Скидаємо пошук, якщо він був у параметрах, але тепер керується з іншого місця
+      params.delete("search");
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [searchParams, router, pathname], // 3. Вказуємо її залежності
+    [searchParams, router, pathname],
   );
-
-  useEffect(() => {
-    if (debouncedSearch !== (currentFilters.search || "")) {
-      updateFilters({ search: debouncedSearch });
-    }
-  }, [debouncedSearch, currentFilters.search, updateFilters]);
 
   return (
     <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-      {/* Пошук */}
-      <div className="flex-1 max-w-md">
-        <Input
-          placeholder="Пошук товарів..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
       {/* Фільтр за ціною */}
       <div className="flex gap-2 items-end">
         <div className="w-32">
@@ -122,7 +104,7 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
       </Select>
 
       {/* Кнопка скидання */}
-      {(search || minPrice || maxPrice || currentFilters.sort !== "newest") && (
+      {(minPrice || maxPrice || currentFilters.sort !== "newest") && (
         <Button variant="outline" onClick={() => router.push(pathname)}>
           Скинути фільтри
         </Button>

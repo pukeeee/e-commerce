@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/shared/ui/theme";
 import { useIsMobile } from "@/shared/hooks/use-media-query";
 import { MobileMenuSheet } from "@/widgets/mobile-menu-sheet/ui/MobileMenuSheet";
 import { useState, useEffect } from "react";
+import { SearchSheet } from "@/widgets/search-sheet";
 
 /**
  * @widget Header
@@ -64,7 +65,10 @@ export function Header() {
             </div>
 
             {/* Права сторона: Кошик */}
-            <CartSheet />
+            <div className="flex items-center gap-2">
+              <SearchSheet />
+              <CartSheet />
+            </div>
           </>
         ) : (
           <>
@@ -83,6 +87,9 @@ export function Header() {
 
               {/* Кнопка перемикача теми */}
               <ThemeToggle />
+
+              {/* Кнопка пошуку */}
+              <SearchSheet />
 
               {/* Кошик */}
               <CartSheet />

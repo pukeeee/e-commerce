@@ -59,6 +59,9 @@ export const CartSheet = () => {
   const [isSyncing, startSyncTransition] = useTransition();
   const lastSyncTime = useRef<number>(0);
 
+  const items = useCart((state) => state.items);
+  const count = useMemo(() => Object.keys(items).length, [items]);
+
   const handleSyncCart = useCallback(async () => {
     const currentItems = useCartStoreBase.getState().items;
     if (Object.keys(currentItems).length === 0) return;
@@ -144,11 +147,13 @@ export const CartSheet = () => {
               <CartSummary />
               <div className="grid grid-cols-2 gap-4">
                 <ClearCartButton />
-                <Button asChild className="w-full">
-                  <Link href="/checkout" onClick={() => setIsOpen(false)}>
-                    Оформити
-                  </Link>
-                </Button>
+                {count > 0 && (
+                  <Button asChild className="w-full">
+                    <Link href="/checkout" onClick={() => setIsOpen(false)}>
+                      Оформити
+                    </Link>
+                  </Button>
+                )}
               </div>
             </SheetFooter>
           </>

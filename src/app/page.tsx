@@ -74,17 +74,13 @@ export default async function HomePage() {
         {/* Категорії */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold mb-6">Категорії</h2>
-          <Suspense
-            fallback={
-              <div className="h-48 animate-pulse bg-muted rounded-lg" />
-            }
-          >
+          <Suspense fallback={<div className="h-28" />}>
             <Categories />
           </Suspense>
         </section>
 
-        <h1 className="mt-16 mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
-          Наші товари
+        <h1 className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
+          Всі товари
         </h1>
         <Suspense fallback={<ProductGridSkeleton />}>
           <Products />

@@ -12,8 +12,8 @@ export const revalidate = 3600;
 export const dynamic = "force-dynamic";
 
 interface CategoryPageProps {
-  params: { slug: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({
@@ -41,11 +41,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function CategoryPage({
-  params,
-  searchParams,
-}: CategoryPageProps) {
-  const { slug } = await params;
+export default async function CategoryPage(props: CategoryPageProps) {
+  const { slug } = await props.params;
+  const searchParams = await props.searchParams;
 
   const supabase = await createClient();
   const category = await categoryRepository.getBySlug(supabase, slug);
@@ -57,14 +55,14 @@ export default async function CategoryPage({
   // Парсимо фільтри з URL
   const parseResult = ProductFiltersSchema.safeParse({
     categorySlug: slug,
-    sort: await searchParams.sort,
-    minPrice: (await searchParams.minPrice)
+    sort: searchParams.sort,
+    minPrice: searchParams.minPrice
       ? Number(searchParams.minPrice)
       : undefined,
-    maxPrice: (await searchParams.maxPrice)
+    maxPrice: searchParams.maxPrice
       ? Number(searchParams.maxPrice)
       : undefined,
-    search: await searchParams.search,
+    search: searchParams.search,
   });
 
   // Якщо парсинг невдалий, використовуємо дефолтні значення
