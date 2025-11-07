@@ -22,13 +22,13 @@ import {
   useEffect,
   useTransition,
   useCallback,
-  useRef,
 } from "react";
 import { getProductsByIdsAction } from "@/features/get-products-by-ids/action";
 import { CartItemSkeleton } from "@/shared/ui/skeleton";
 import { CACHE_TIMES } from "@/shared/config/constants";
 import Link from "next/link";
 import { ClearCartButton } from "@/features/clear-cart";
+import { useThrottleAction } from "@/shared/hooks/use-throttle-action";
 
 const CartBadge = memo(() => {
   const isHydrated = useCart((state) => state.isHydrated);
@@ -57,42 +57,32 @@ export const CartSheet = () => {
   const [isOpen, setIsOpen] = useState(false);
   const syncWithServer = useCart((state) => state.syncWithServer);
   const [isSyncing, startSyncTransition] = useTransition();
-  const lastSyncTime = useRef<number>(0);
 
   const items = useCart((state) => state.items);
   const count = useMemo(() => Object.keys(items).length, [items]);
 
-  const handleSyncCart = useCallback(async () => {
+  const syncCart = useCallback(async () => {
     const currentItems = useCartStoreBase.getState().items;
     if (Object.keys(currentItems).length === 0) return;
 
-    const now = Date.now();
-
-    // Перевіряємо, чи потрібна синхронізація (пройшло > 5 хвилин)
-    if (now - lastSyncTime.current < CACHE_TIMES.SYNC_INTERVAL) {
-      return; // Пропускаємо синхронізацію
-    }
     try {
       const productIds = Object.keys(currentItems);
       const result = await getProductsByIdsAction(productIds);
 
       if (!result.success) {
-        toast.error(result.error.message || "Не вдалося оновити кошик.");
+        toast.error("Не вдалося оновити кошик");
         return;
       }
 
       const { removedItems, updatedItems } = await syncWithServer(result.data);
 
-      // Оновлюємо час останньої синхронізації лише при успіху
-      lastSyncTime.current = now;
-
-      // Показуємо сповіщення, лише якщо є зміни
       if (removedItems.length > 0) {
         toast.warning(
           `Видалено з кошика: ${removedItems.map((i) => i.name).join(", ")}`,
           { duration: 5000 },
         );
       }
+
       if (updatedItems.length > 0) {
         toast.info(
           `Оновлено дані для: ${updatedItems.map((i) => i.name).join(", ")}`,
@@ -100,19 +90,20 @@ export const CartSheet = () => {
         );
       }
     } catch (error) {
-      console.error("Помилка синхронізації кошика:", error);
-      toast.error("Не вдалося оновити кошик.");
+      console.error("Cart sync error:", error);
+      toast.error("Не вдалося оновити кошик");
     }
   }, [syncWithServer]);
 
-  // Синхронізуємо лише при першому відкритті або якщо пройшло достатньо часу
+  const throttledSync = useThrottleAction(syncCart, CACHE_TIMES.SYNC_INTERVAL);
+
   useEffect(() => {
     if (isOpen) {
       startSyncTransition(() => {
-        handleSyncCart();
+        throttledSync();
       });
     }
-  }, [isOpen, handleSyncCart]);
+  }, [isOpen, throttledSync]);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
