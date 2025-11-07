@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useCallback } from "react";
+import { useState, useTransition, useCallback, useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -25,7 +25,9 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
+  // Local state
   const [minPrice, setMinPrice] = useState(
     currentFilters.minPrice?.toString() || "",
   );
@@ -33,22 +35,43 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
     currentFilters.maxPrice?.toString() || "",
   );
 
+  // ✅ Мемоїзована функція оновлення
   const updateFilters = useCallback(
     (updates: Partial<Omit<ProductFilters, "search">>) => {
-      const params = new URLSearchParams(searchParams);
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value === undefined || value === "" || value === null) {
-          params.delete(key);
-        } else {
-          params.set(key, String(value));
-        }
+      startTransition(() => {
+        const params = new URLSearchParams(searchParams);
+
+        Object.entries(updates).forEach(([key, value]) => {
+          if (value === undefined || value === "" || value === null) {
+            params.delete(key);
+          } else {
+            params.set(key, String(value));
+          }
+        });
+
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
       });
-      // Скидаємо пошук, якщо він був у параметрах, але тепер керується з іншого місця
-      params.delete("search");
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [searchParams, router, pathname],
   );
+
+  // ✅ Мемоїзована перевірка наявності активних фільтрів
+  const hasActiveFilters = useMemo(() => {
+    return !!(minPrice || maxPrice || currentFilters.sort !== "newest");
+  }, [minPrice, maxPrice, currentFilters.sort]);
+
+  // ✅ Обробник для скидання з transition, що зберігає інші параметри (напр. глобальний пошук)
+  const handleReset = useCallback(() => {
+    setMinPrice("");
+    setMaxPrice("");
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("minPrice");
+      params.delete("maxPrice");
+      params.delete("sort");
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  }, [pathname, router, searchParams]);
 
   return (
     <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -63,13 +86,16 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
             placeholder="0"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
-            onBlur={() =>
-              updateFilters({
-                minPrice: minPrice ? Number(minPrice) : undefined,
-              })
-            }
+            onBlur={() => {
+              const value = minPrice ? Number(minPrice) : undefined;
+              if (value !== currentFilters.minPrice) {
+                updateFilters({ minPrice: value });
+              }
+            }}
+            disabled={isPending}
           />
         </div>
+
         <div className="w-32">
           <label className="text-sm text-muted-foreground mb-1 block">до</label>
           <Input
@@ -77,11 +103,13 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
             placeholder="∞"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            onBlur={() =>
-              updateFilters({
-                maxPrice: maxPrice ? Number(maxPrice) : undefined,
-              })
-            }
+            onBlur={() => {
+              const value = maxPrice ? Number(maxPrice) : undefined;
+              if (value !== currentFilters.maxPrice) {
+                updateFilters({ maxPrice: value });
+              }
+            }}
+            disabled={isPending}
           />
         </div>
       </div>
@@ -90,6 +118,7 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
       <Select
         value={currentFilters.sort}
         onValueChange={(value) => updateFilters({ sort: value as SortOption })}
+        disabled={isPending}
       >
         <SelectTrigger className="w-48">
           <SelectValue />
@@ -104,8 +133,8 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
       </Select>
 
       {/* Кнопка скидання */}
-      {(minPrice || maxPrice || currentFilters.sort !== "newest") && (
-        <Button variant="outline" onClick={() => router.push(pathname)}>
+      {hasActiveFilters && (
+        <Button variant="outline" onClick={handleReset} disabled={isPending}>
           Скинути фільтри
         </Button>
       )}
