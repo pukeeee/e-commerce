@@ -1,9 +1,8 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Category, ICategoryRepository } from "@/entities/category";
 import { CACHE_TAGS } from "@/shared/lib/cache";
 import { CACHE_TIMES } from "@/shared/config/constants";
 import { handleSupabaseError } from "@/shared/lib/errors/supabase-error-handler";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/shared/api/supabase/server";
 import { unstable_cache } from "next/cache";
 
 type RawCategory = {
@@ -27,76 +26,68 @@ const mapCategory = (raw: RawCategory): Category => ({
   createdAt: raw.created_at,
 });
 
-async function getAllUncached(supabase: SupabaseClient): Promise<Category[]> {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("is_active", true)
-    .order("display_order", { ascending: true });
+// --- Публічні методи репозиторію ---
 
-  if (error) {
-    // handleSupabaseError повертає never, але для ясності можна додати return
-    return handleSupabaseError(error, { tableName: "categories" });
-  }
+async function getAll(): Promise<Category[]> {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  // 2. Використовуємо type assertion (`as`) - просто і без попереджень
-  const typedData = data as RawCategory[] | null;
+  const getAllCached = unstable_cache(
+    async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
 
-  return typedData ? typedData.map(mapCategory) : [];
+      if (error) {
+        return handleSupabaseError(error, { tableName: "categories" });
+      }
+      return (data as RawCategory[] | null)?.map(mapCategory) ?? [];
+    },
+    // ✅ Ключ кешу тепер унікальний для користувача (або 'anon' для всіх анонімів)
+    [CACHE_TAGS.categories, session?.user.id ?? "anon"],
+    {
+      revalidate: CACHE_TIMES.CATEGORIES,
+      tags: [CACHE_TAGS.categories],
+    },
+  );
+
+  return getAllCached();
 }
 
-async function getBySlugUncached(
-  supabase: SupabaseClient,
-  slug: string,
-): Promise<Category | null> {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle(); // 3. maybeSingle() - ідеально для "один або null"
+async function getBySlug(slug: string): Promise<Category | null> {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (error) {
-    return handleSupabaseError(error, { tableName: "categories" });
-  }
+  const getBySlugCached = unstable_cache(
+    async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .maybeSingle();
 
-  const typedData = data as RawCategory | null;
+      if (error) {
+        return handleSupabaseError(error, { tableName: "categories" });
+      }
+      return data ? mapCategory(data as RawCategory) : null;
+    },
+    // ✅ Ключ кешу тепер унікальний для slug ТА користувача
+    [CACHE_TAGS.category(slug), session?.user.id ?? "anon"],
+    {
+      revalidate: CACHE_TIMES.CATEGORIES,
+      tags: [CACHE_TAGS.category(slug)],
+    },
+  );
 
-  return typedData ? mapCategory(typedData) : null;
+  return getBySlugCached();
 }
-
-// --- Створення клієнта Supabase ---
-const createSupabaseClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  return createBrowserClient(supabaseUrl, supabaseKey);
-};
-
-// --- Кешовані версії функцій ---
-
-const getAll = unstable_cache(
-  async () => {
-    const supabase = createSupabaseClient();
-    return getAllUncached(supabase);
-  },
-  [CACHE_TAGS.categories],
-  {
-    revalidate: CACHE_TIMES.CATEGORIES,
-    tags: [CACHE_TAGS.categories],
-  },
-);
-
-const getBySlug = unstable_cache(
-  async (slug: string) => {
-    const supabase = createSupabaseClient();
-    return getBySlugUncached(supabase, slug);
-  },
-  [CACHE_TAGS.categories], // Базовий ключ
-  {
-    revalidate: CACHE_TIMES.CATEGORIES,
-    tags: [CACHE_TAGS.categories], // Теги більше не динамічні
-  },
-);
 
 export const categoryRepository: ICategoryRepository = {
   getAll,

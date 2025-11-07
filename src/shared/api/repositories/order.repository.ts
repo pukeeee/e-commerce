@@ -11,8 +11,7 @@ import {
 import { CACHE_TAGS } from "@/shared/lib/cache";
 import { CACHE_TIMES } from "@/shared/config/constants";
 import { handleSupabaseError } from "@/shared/lib/errors/supabase-error-handler";
-import { SupabaseClient } from "@supabase/supabase-js";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/shared/api/supabase/server";
 import { unstable_cache } from "next/cache";
 
 // --- Типи та маппери ---
@@ -54,19 +53,10 @@ const mapOrder = (rawOrder: RawOrder): Order => {
   };
 };
 
-// --- Створення клієнта Supabase ---
-// Цей клієнт буде використовуватися і для мутацій, і для кешованих запитів.
-// Поки що це простий клієнт; ми його покращимо в пункті #2 з work.md.
-const createSupabaseClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  return createBrowserClient(supabaseUrl, supabaseKey);
-};
-
 // --- Функції репозиторію ---
 
 async function create(data: CreateOrderPayload): Promise<Order> {
-  const supabase = createSupabaseClient();
+  const supabase = await createClient();
   // Створюємо плаский payload, який очікує SQL-функція
   const rpcPayload = {
     customer_name: data.customerName,
@@ -94,36 +84,43 @@ async function create(data: CreateOrderPayload): Promise<Order> {
   return mapOrder(newOrder as unknown as RawOrder);
 }
 
-async function getByIdUncached(
-  supabase: SupabaseClient,
-  id: string,
-): Promise<Order | null> {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*, order_items(*)")
-    .eq("id", id)
-    .single();
+async function getById(id: string): Promise<Order | null> {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (error) {
-    if (error.code === "PGRST116") return null; // Not found
-    handleSupabaseError(error, { tableName: "orders" });
+  // Замовлення - це дані конкретного користувача.
+  // RLS в Supabase має гарантувати, що користувач бачить лише свої замовлення.
+  // Додавання user.id в ключ кешу гарантує, що кеш одного користувача не буде показаний іншому.
+  const userId = session?.user.id;
+  if (!userId) {
+    return null; // Анонімні користувачі не мають замовлень
   }
-  return mapOrder(data as unknown as RawOrder);
+
+  const getByIdCached = unstable_cache(
+    async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("id", id)
+        .single(); // Припускаємо, що RLS налаштована і фільтрує по user_id
+
+      if (error) {
+        if (error.code === "PGRST116") return null; // Not found
+        handleSupabaseError(error, { tableName: "orders" });
+      }
+      return data ? mapOrder(data as unknown as RawOrder) : null;
+    },
+    [CACHE_TAGS.order(id), userId], // Унікальний ключ для замовлення + користувача
+    {
+      revalidate: CACHE_TIMES.ORDERS,
+      tags: [CACHE_TAGS.order(id)],
+    },
+  );
+
+  return getByIdCached();
 }
-
-// --- Кешована версія getById ---
-
-const getById = unstable_cache(
-  async (id: string) => {
-    const supabase = createSupabaseClient();
-    return getByIdUncached(supabase, id);
-  },
-  [CACHE_TAGS.orders], // Базовий ключ
-  {
-    revalidate: CACHE_TIMES.ORDERS,
-    tags: [CACHE_TAGS.orders], // Теги більше не динамічні
-  },
-);
 
 // --- Експортований репозиторій ---
 
