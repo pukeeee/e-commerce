@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { createClient } from "@/shared/api/supabase/server";
 import { categoryRepository } from "@/shared/api/repositories/category.repository";
 import { productRepository } from "@/shared/api/repositories/product.repository";
 import { ProductGrid } from "@/widgets/catalog/ui/Catalog";
@@ -20,8 +19,7 @@ export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
-  const category = await categoryRepository.getBySlug(supabase, slug);
+  const category = await categoryRepository.getBySlug(slug);
 
   if (!category) {
     return {
@@ -45,8 +43,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
   const { slug } = await props.params;
   const searchParams = await props.searchParams;
 
-  const supabase = await createClient();
-  const category = await categoryRepository.getBySlug(supabase, slug);
+  const category = await categoryRepository.getBySlug(slug);
 
   if (!category) {
     notFound();
@@ -56,12 +53,8 @@ export default async function CategoryPage(props: CategoryPageProps) {
   const parseResult = ProductFiltersSchema.safeParse({
     categorySlug: slug,
     sort: searchParams.sort,
-    minPrice: searchParams.minPrice
-      ? Number(searchParams.minPrice)
-      : undefined,
-    maxPrice: searchParams.maxPrice
-      ? Number(searchParams.maxPrice)
-      : undefined,
+    minPrice: searchParams.minPrice ? Number(searchParams.minPrice) : undefined,
+    maxPrice: searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined,
     search: searchParams.search,
   });
 
@@ -70,10 +63,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
     ? parseResult.data
     : { categorySlug: slug, sort: "newest" as const };
 
-  const products = await productRepository.getProductsFiltered(
-    supabase,
-    filters,
-  );
+  const products = await productRepository.getProductsFiltered(filters);
 
   return (
     <main className="py-8">

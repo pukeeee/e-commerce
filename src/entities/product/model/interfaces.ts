@@ -1,5 +1,4 @@
 import { Product } from "./types";
-import { SupabaseClient } from "@supabase/supabase-js";
 import type { ProductFilters } from "./filter-types";
 
 /**
@@ -14,22 +13,19 @@ export interface IProductRepository {
    * @method getProducts
    * @description Отримує список усіх активних товарів.
    */
-  getProducts(supabase: SupabaseClient): Promise<Product[]>;
+  getProducts(): Promise<Product[]>;
 
   /**
    * @method getById
    * @description Отримує товар за його ID. Повертає null, якщо не знайдено.
    */
-  getById(supabase: SupabaseClient, id: string): Promise<Product | null>;
+  getById(id: string): Promise<Product | null>;
 
   /**
    * @method getByIds
    * @description Отримує список товарів за їх ID.
    */
-  getByIds(supabase: SupabaseClient, ids: string[]): Promise<Product[]>;
+  getByIds(ids: string[]): Promise<Product[]>;
 
-  getProductsFiltered(
-    supabase: SupabaseClient,
-    filters: ProductFilters,
-  ): Promise<Product[]>;
+  getProductsFiltered(filters: ProductFilters): Promise<Product[]>;
 }

@@ -1,5 +1,4 @@
 import z from "zod";
-import { createClient } from "@/shared/api/supabase/server";
 import { categoryRepository } from "@/shared/api/repositories/category.repository";
 import { PublicCategorySchema } from "@/entities/category/model/schemas";
 import { handleServerError } from "@/shared/lib/errors/error-handler";
@@ -15,8 +14,7 @@ export async function getCategoriesAction(): Promise<
   ActionResponse<z.infer<typeof GetCategoryActionResponseSchema>>
 > {
   try {
-    const supabase = await createClient();
-    const categories = await categoryRepository.getAll(supabase);
+    const categories = await categoryRepository.getAll();
 
     const validatedData = GetCategoryActionResponseSchema.parse(categories);
 

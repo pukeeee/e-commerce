@@ -2,8 +2,6 @@
 
 import type { PublicCategory } from "@/entities/category";
 import { CategoryItem } from "@/entities/category/ui/CategoryItem";
-import { useIsMobile } from "@/shared/hooks/use-media-query";
-import { cn } from "@/shared/lib/utils";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
@@ -33,7 +31,6 @@ interface CategoryGridProps {
 }
 
 export function CategoryGrid({ categories }: CategoryGridProps) {
-  const isMobile = useIsMobile();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -44,19 +41,27 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
     return null;
   }
 
+  const gridClassName =
+    "flex gap-x-6 overflow-x-auto pb-4 px-4 -mx-4 md:flex-wrap md:justify-center md:gap-y-8 md:overflow-visible md:p-0 md:m-0";
+
+  // Поки компонент не змонтовано на клієнті, рендеримо просту версію без анімації.
+  // Це запобігає помилці гідрації, яка ламає анімацію.
   if (!isMounted) {
-    return <div className="h-28" />;
+    return (
+      <div className={gridClassName}>
+        {categories.map((category) => (
+          <div key={category.id}>
+            <CategoryItem category={category} />
+          </div>
+        ))}
+      </div>
+    );
   }
 
-  // Після монтування рендеримо повну версію з анімацією.
+  // Після монтування на клієнті, рендеримо повну версію з анімацією.
   return (
     <motion.div
-      className={cn(
-        "flex gap-x-6",
-        isMobile
-          ? "overflow-x-auto pb-4 px-4 -mx-4"
-          : "flex-wrap justify-center gap-y-8",
-      )}
+      className={gridClassName}
       variants={containerVariants}
       initial="hidden"
       animate="visible"

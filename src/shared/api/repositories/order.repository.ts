@@ -8,10 +8,12 @@ import {
   PaymentMethodEnum,
   OrderStatusEnum,
 } from "@/entities/order/model/enums";
-import { CACHE_TAGS, createCachedFunction } from "@/shared/lib/cache";
+import { CACHE_TAGS } from "@/shared/lib/cache";
 import { CACHE_TIMES } from "@/shared/config/constants";
 import { handleSupabaseError } from "@/shared/lib/errors/supabase-error-handler";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import { unstable_cache } from "next/cache";
 
 // --- Типи та маппери ---
 
@@ -52,12 +54,19 @@ const mapOrder = (rawOrder: RawOrder): Order => {
   };
 };
 
+// --- Створення клієнта Supabase ---
+// Цей клієнт буде використовуватися і для мутацій, і для кешованих запитів.
+// Поки що це простий клієнт; ми його покращимо в пункті #2 з work.md.
+const createSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  return createBrowserClient(supabaseUrl, supabaseKey);
+};
+
 // --- Функції репозиторію ---
 
-async function create(
-  supabase: SupabaseClient,
-  data: CreateOrderPayload,
-): Promise<Order> {
+async function create(data: CreateOrderPayload): Promise<Order> {
+  const supabase = createSupabaseClient();
   // Створюємо плаский payload, який очікує SQL-функція
   const rpcPayload = {
     customer_name: data.customerName,
@@ -104,15 +113,17 @@ async function getByIdUncached(
 
 // --- Кешована версія getById ---
 
-const getById = (supabase: SupabaseClient, id: string) =>
-  createCachedFunction(
-    () => getByIdUncached(supabase, id),
-    [CACHE_TAGS.order(id)],
-    {
-      revalidate: CACHE_TIMES.ORDERS,
-      tags: [CACHE_TAGS.orders, CACHE_TAGS.order(id)],
-    },
-  )();
+const getById = unstable_cache(
+  async (id: string) => {
+    const supabase = createSupabaseClient();
+    return getByIdUncached(supabase, id);
+  },
+  [CACHE_TAGS.orders], // Базовий ключ
+  {
+    revalidate: CACHE_TIMES.ORDERS,
+    tags: [CACHE_TAGS.orders], // Теги більше не динамічні
+  },
+);
 
 // --- Експортований репозиторій ---
 

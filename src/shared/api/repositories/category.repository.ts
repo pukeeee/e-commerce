@@ -1,8 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Category, ICategoryRepository } from "@/entities/category";
-import { CACHE_TAGS, createCachedFunction } from "@/shared/lib/cache";
+import { CACHE_TAGS } from "@/shared/lib/cache";
 import { CACHE_TIMES } from "@/shared/config/constants";
 import { handleSupabaseError } from "@/shared/lib/errors/supabase-error-handler";
+import { createBrowserClient } from "@supabase/ssr";
+import { unstable_cache } from "next/cache";
 
 type RawCategory = {
   id: string;
@@ -63,25 +65,38 @@ async function getBySlugUncached(
   return typedData ? mapCategory(typedData) : null;
 }
 
-const getAll = (supabase: SupabaseClient) =>
-  createCachedFunction(
-    () => getAllUncached(supabase),
-    [CACHE_TAGS.categories],
-    {
-      revalidate: CACHE_TIMES.CATEGORIES,
-      tags: [CACHE_TAGS.categories],
-    },
-  )();
+// --- Створення клієнта Supabase ---
+const createSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  return createBrowserClient(supabaseUrl, supabaseKey);
+};
 
-const getBySlug = (supabase: SupabaseClient, slug: string) =>
-  createCachedFunction(
-    () => getBySlugUncached(supabase, slug),
-    [CACHE_TAGS.category(slug)],
-    {
-      revalidate: CACHE_TIMES.CATEGORIES,
-      tags: [CACHE_TAGS.categories, CACHE_TAGS.category(slug)],
-    },
-  )();
+// --- Кешовані версії функцій ---
+
+const getAll = unstable_cache(
+  async () => {
+    const supabase = createSupabaseClient();
+    return getAllUncached(supabase);
+  },
+  [CACHE_TAGS.categories],
+  {
+    revalidate: CACHE_TIMES.CATEGORIES,
+    tags: [CACHE_TAGS.categories],
+  },
+);
+
+const getBySlug = unstable_cache(
+  async (slug: string) => {
+    const supabase = createSupabaseClient();
+    return getBySlugUncached(supabase, slug);
+  },
+  [CACHE_TAGS.categories], // Базовий ключ
+  {
+    revalidate: CACHE_TIMES.CATEGORIES,
+    tags: [CACHE_TAGS.categories], // Теги більше не динамічні
+  },
+);
 
 export const categoryRepository: ICategoryRepository = {
   getAll,
