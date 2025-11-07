@@ -3,9 +3,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 
-import { useCart, type CartItem } from "@/entities/cart";
+import { useCart } from "@/entities/cart";
 import {
   CreateOrderPayloadSchema,
   PaymentMethodEnum,
@@ -39,7 +39,22 @@ interface OrderFormProps {
 
 export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
   const items = useCart((state) => state.items);
-  const [isDismissed, setIsDismissed] = useState(false);
+
+  // ✅ Вичисляємо items і total напряму
+  const orderData = useMemo(() => {
+    const orderItems = Object.values(items).map((item) => ({
+      productId: item.id,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    const totalAmount = orderItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+
+    return { orderItems, totalAmount };
+  }, [items]);
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(CreateOrderPayloadSchema),
@@ -50,28 +65,13 @@ export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
       shippingAddress: "",
       orderNote: "",
       paymentMethod: "cash_on_delivery",
-      items: [],
-      totalAmount: 0,
+      // ✅ Використовуємо вичислені значення напряму
+      items: orderData.orderItems,
+      totalAmount: orderData.totalAmount,
     },
   });
 
-  const { reset, setError, setValue } = form;
-
-  useEffect(() => {
-    const orderItems = Object.values(items).map((item: CartItem) => ({
-      productId: item.id,
-      quantity: item.quantity,
-      price: item.price,
-    }));
-
-    const newTotalAmount = orderItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0,
-    );
-
-    setValue("items", orderItems);
-    setValue("totalAmount", newTotalAmount);
-  }, [items, setValue]);
+  const { setError } = form;
 
   useEffect(() => {
     if (state.fieldErrors) {
@@ -86,21 +86,16 @@ export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
     }
   }, [state.fieldErrors, setError]);
 
-  useEffect(() => {
-    if (state.isSuccess) {
-      reset();
-    }
-  }, [state.isSuccess, reset]);
-
-  // Скидаємо стан "закритої" помилки при новій спробі відправки
-  useEffect(() => {
-    if (isPending) {
-      setIsDismissed(false);
-    }
-  }, [isPending]);
-
+  // ✅ ОДИН обробник замість декількох useEffect'ів
   async function onSubmit(data: OrderFormValues) {
-    await createOrder(data);
+    // Оновлюємо актуальні дані перед відправкою
+    const payload = {
+      ...data,
+      items: orderData.orderItems,
+      totalAmount: orderData.totalAmount,
+    };
+
+    await createOrder(payload);
   }
 
   return (
@@ -112,19 +107,15 @@ export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-6"
         >
-          {/*
-            Блок для відображення загальної помилки від сервера.
-            Користувач може закрити це повідомлення, але воно з'явиться знову
-            при наступній спробі відправки, якщо помилка не зникне.
-          */}
-          {state.serverError && !isDismissed && (
+          {/* ✅ Показываем server errors через React Hook Form */}
+          {state.serverError && (
             <ErrorMessage
               title="Помилка сервера"
               message={state.serverError}
               type="error"
-              onDismiss={() => setIsDismissed(true)}
             />
           )}
+
           <FormField
             control={form.control}
             name="customerName"
