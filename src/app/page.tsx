@@ -6,6 +6,8 @@ import { ProductGridSkeleton } from "@/shared/ui/skeleton";
 import { Metadata } from "next";
 import { CategoryGrid } from "@/widgets/category-grid/ui/CategoryGrid";
 import { getCategoriesAction } from "@/features/get-categories/model/action";
+import { HeroSection } from "@/widgets/hero-section";
+import { SectionHeading } from "@/shared/ui/section-heading";
 
 // Вмикаємо ISR (Incremental Static Regeneration)
 export const revalidate = 3600;
@@ -62,26 +64,21 @@ export default async function HomePage() {
     <main className="py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero секція */}
-        <section className="mb-16 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mb-4">
-            Техніка Apple
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Оригінальні продукти Apple з офіційною гарантією
-          </p>
-        </section>
+        <HeroSection />
 
         {/* Категорії */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-6">Категорії</h2>
+          <SectionHeading className="text-2xl font-bold mb-6">
+            Категорії
+          </SectionHeading>
           <Suspense fallback={<div className="h-28" />}>
             <Categories />
           </Suspense>
         </section>
 
-        <h1 className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
+        <SectionHeading className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl">
           Всі товари
-        </h1>
+        </SectionHeading>
         <Suspense fallback={<ProductGridSkeleton />}>
           <Products />
         </Suspense>
