@@ -14,7 +14,6 @@ import { Badge } from "@/shared/ui/badge";
 import { useCart, useCartStoreBase } from "@/entities/cart";
 import { CartItemsList } from "./CartItemsList";
 import { CartSummary } from "./CartSummary";
-import { ClientOnly } from "@/shared/lib/hydration/ClientOnly";
 import { toast } from "sonner";
 import {
   useMemo,
@@ -32,10 +31,11 @@ import Link from "next/link";
 import { ClearCartButton } from "@/features/clear-cart";
 
 const CartBadge = memo(() => {
+  const isHydrated = useCart((state) => state.isHydrated);
   const items = useCart((state) => state.items);
   const count = useMemo(() => Object.keys(items).length, [items]);
 
-  if (count === 0) return null;
+  if (!isHydrated || count === 0) return null;
 
   return (
     <Badge
@@ -120,9 +120,7 @@ export const CartSheet = () => {
         <Button variant="outline" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
           <span className="sr-only">Відкрити кошик</span>
-          <ClientOnly>
-            <CartBadge />
-          </ClientOnly>
+          <CartBadge />
         </Button>
       </SheetTrigger>
 

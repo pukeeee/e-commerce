@@ -5,32 +5,39 @@ import { CACHE_TAGS } from "@/shared/lib/cache";
 import { CACHE_TIMES } from "@/shared/config/constants";
 import { handleSupabaseError } from "@/shared/lib/errors/supabase-error-handler";
 import type { ProductFilters } from "@/entities/product/model/filter-types";
+import { z } from "zod";
 
-// Проміжний тип для сирих даних з Supabase, оскільки поля в БД у snake_case
-type RawProduct = {
-  id: string;
-  created_at: string;
-  name: string;
-  description: string | null;
-  price: number;
-  image_url: string | null;
-  is_active: boolean;
-};
-
-type RawFilteredProduct = RawProduct & {
-  categories: { slug: string } | null;
-};
-
-// Функція для перетворення даних з snake_case (БД) в camelCase (доменна модель)
-const mapProduct = (raw: RawProduct): Product => ({
-  id: raw.id,
-  createdAt: raw.created_at,
-  name: raw.name,
-  description: raw.description ?? undefined,
-  price: raw.price,
-  imageUrl: raw.image_url ?? undefined,
-  isActive: raw.is_active,
+// ✅ Zod схема для runtime валідації
+const ProductSchema = z.object({
+  id: z.uuid(),
+  created_at: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  price: z.number(),
+  image_url: z.url().nullable(),
+  is_active: z.boolean(),
 });
+
+const FilteredProductSchema = ProductSchema.extend({
+  categories: z.object({ slug: z.string() }).nullable(),
+});
+
+// ✅ Тип, виведений зі схеми
+type RawProduct = z.infer<typeof ProductSchema>;
+
+// ✅ Функція для перетворення даних з snake_case (БД) в camelCase (доменна модель)
+const mapProduct = (raw: RawProduct): Product => {
+  // Валідація відбувається до виклику цієї функції
+  return {
+    id: raw.id,
+    createdAt: raw.created_at,
+    name: raw.name,
+    description: raw.description ?? undefined,
+    price: raw.price,
+    imageUrl: raw.image_url ?? undefined,
+    isActive: raw.is_active,
+  };
+};
 
 // --- Публічні методи репозиторію ---
 
@@ -49,7 +56,15 @@ async function getProducts(): Promise<Product[]> {
         .order("created_at", { ascending: false });
 
       if (error) handleSupabaseError(error, { tableName: "products" });
-      return data?.map(mapProduct) ?? [];
+
+      // ✅ Валідація даних
+      const parsed = z.array(ProductSchema).safeParse(data);
+      if (!parsed.success) {
+        console.error("Invalid product data:", parsed.error);
+        return [];
+      }
+
+      return parsed.data.map(mapProduct);
     },
     [CACHE_TAGS.products, "all", session?.user.id ?? "anon"],
     {
@@ -73,11 +88,22 @@ async function getById(id: string): Promise<Product | null> {
         .select("*")
         .eq("id", id)
         .single();
+
       if (error) {
         if (error.code === "PGRST116") return null;
         handleSupabaseError(error, { tableName: "products" });
       }
-      return data ? mapProduct(data) : null;
+
+      if (!data) return null;
+
+      // ✅ Валідація даних
+      const parsed = ProductSchema.safeParse(data);
+      if (!parsed.success) {
+        console.error(`Invalid product data for id ${id}:`, parsed.error);
+        return null;
+      }
+
+      return mapProduct(parsed.data);
     },
     [CACHE_TAGS.product(id), session?.user.id ?? "anon"],
     {
@@ -103,8 +129,17 @@ async function getByIds(ids: string[]): Promise<Product[]> {
         .select("*")
         .in("id", sortedIds)
         .eq("is_active", true);
+
       if (error) handleSupabaseError(error, { tableName: "products" });
-      return data?.map(mapProduct) ?? [];
+
+      // ✅ Валідація даних
+      const parsed = z.array(ProductSchema).safeParse(data);
+      if (!parsed.success) {
+        console.error("Invalid product data for batch ids:", parsed.error);
+        return [];
+      }
+
+      return parsed.data.map(mapProduct);
     },
     [CACHE_TAGS.products, "batch", ...sortedIds, session?.user.id ?? "anon"],
     {
@@ -165,7 +200,15 @@ async function getProductsFiltered(
 
       const { data, error } = await query;
       if (error) return handleSupabaseError(error, { tableName: "products" });
-      return (data as RawFilteredProduct[] | null)?.map(mapProduct) ?? [];
+
+      // ✅ Валідація даних
+      const parsed = z.array(FilteredProductSchema).safeParse(data);
+      if (!parsed.success) {
+        console.error("Invalid filtered product data:", parsed.error);
+        return [];
+      }
+
+      return parsed.data.map(mapProduct);
     },
     cacheKey,
     {

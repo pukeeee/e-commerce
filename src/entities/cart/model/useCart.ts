@@ -6,14 +6,14 @@
  * - Використовує `Record<string, CartItem>` для миттєвого доступу до товарів (O(1)).
  * - Інтегрується з `localStorage` через middleware `persist` безпечним для SSR способом.
  * - Надає чіткий набір дій (actions) для маніпуляції кошиком.
+ * - Реалізує безшовну гідрацію без потреби в ClientOnly.
  */
-
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+
 import type { CartItem } from "./types";
 import type { CartStoreState } from "./interfaces";
 import { CartItemSchema } from "./schemas";
-import { ssrSafeLocalStorage } from "@/shared/lib/storage/ssr-safe-local-storage";
 import { syncCartWithProducts } from "../lib/cart-sync";
 
 const useCartStoreBase = create(
@@ -21,8 +21,13 @@ const useCartStoreBase = create(
     (set, get) => ({
       // --- State ---
       items: {},
+      isHydrated: false, // ✅ Додаємо флаг гідрації
 
       // --- Actions ---
+      _hasHydrated: () => {
+        set({ isHydrated: true });
+      },
+
       addItem: (product, quantity = 1) => {
         set((state) => {
           const existingItem = state.items[product.id];
@@ -103,15 +108,18 @@ const useCartStoreBase = create(
     }),
     {
       name: "cart-storage",
-      storage: createJSONStorage(() => ssrSafeLocalStorage),
+      // ✅ Використовуємо звичайний localStorage - він вже безпечний в persist
+      storage: createJSONStorage(() => localStorage),
+      // ✅ Викликаємо _hasHydrated коли стан відновлено
+      onRehydrateStorage: () => (state) => {
+        state?._hasHydrated();
+      },
     },
   ),
 );
 
 /**
- * Ідеальний SSR-safe хук для кошика.
- * Він просто є проксі до базового стору.
- * Безпека гарантується зовнішнім компонентом ClientOnly.
+ * ✅ Hook який повертає коректне стан до гідрації
  */
 export function useCart<T>(selector: (state: CartStoreState) => T): T {
   return useCartStoreBase(selector);

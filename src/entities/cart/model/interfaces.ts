@@ -14,7 +14,10 @@ export interface SyncChanges {
 export interface CartStoreState {
   // --- state ---
   items: Record<string, CartItem>;
+  isHydrated: boolean;
+
   // --- actions ---
+  _hasHydrated: () => void;
   addItem: (product: Omit<CartItem, "quantity">, quantity?: number) => void;
   removeItem: (productId: string) => void;
   clear: () => void;

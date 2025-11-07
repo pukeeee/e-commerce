@@ -1,11 +1,11 @@
 "use client";
 
+import { useCart } from "@/entities/cart";
 import { useCartItem } from "@/entities/cart/model/selectors";
 import type { PublicProduct } from "@/entities/product";
 import { Button } from "@/shared/ui/button";
-import { MinusIcon, PlusIcon, ShoppingCartIcon } from "lucide-react";
-import { ClientOnly } from "@/shared/lib/hydration/ClientOnly";
 import { ButtonSkeleton } from "@/shared/ui/skeleton";
+import { MinusIcon, PlusIcon, ShoppingCartIcon } from "lucide-react";
 import { memo } from "react";
 
 interface AddToCartButtonProps {
@@ -15,11 +15,17 @@ interface AddToCartButtonProps {
 /**
  * Компонент кнопки для додавання/оновлення товару в кошику.
  * Показує або кнопку "Додати в кошик", або лічильник для зміни кількості.
+ * Обробляє стан гідрації, показуючи скелетон під час завантаження.
  */
-const AddToCartButtonInner = ({ product }: AddToCartButtonProps) => {
+export const AddToCartButton = memo(({ product }: AddToCartButtonProps) => {
+  const isHydrated = useCart((s) => s.isHydrated);
   const { quantity, addItem, increaseQuantity, decreaseQuantity } = useCartItem(
     product.id,
   );
+
+  if (!isHydrated) {
+    return <ButtonSkeleton />;
+  }
 
   // Якщо товару немає в кошику, показуємо кнопку для додавання
   if (quantity === 0) {
@@ -57,14 +63,6 @@ const AddToCartButtonInner = ({ product }: AddToCartButtonProps) => {
         <PlusIcon className="h-4 w-4" />
       </Button>
     </div>
-  );
-};
-
-export const AddToCartButton = memo(({ product }: AddToCartButtonProps) => {
-  return (
-    <ClientOnly fallback={<ButtonSkeleton />}>
-      <AddToCartButtonInner product={product} />
-    </ClientOnly>
   );
 });
 
