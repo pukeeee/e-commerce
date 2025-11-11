@@ -43,9 +43,6 @@ const mapProduct = (raw: RawProduct): Product => {
 
 async function getProducts(): Promise<Product[]> {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
   const getProductsCached = unstable_cache(
     async () => {
@@ -66,7 +63,7 @@ async function getProducts(): Promise<Product[]> {
 
       return parsed.data.map(mapProduct);
     },
-    [CACHE_TAGS.products, "all", session?.user.id ?? "anon"],
+    [CACHE_TAGS.products, "all"],
     {
       revalidate: CACHE_TIMES.PRODUCTS,
       tags: [CACHE_TAGS.products],
@@ -77,9 +74,6 @@ async function getProducts(): Promise<Product[]> {
 
 async function getById(id: string): Promise<Product | null> {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
   const getByIdCached = unstable_cache(
     async () => {
@@ -105,7 +99,7 @@ async function getById(id: string): Promise<Product | null> {
 
       return mapProduct(parsed.data);
     },
-    [CACHE_TAGS.product(id), session?.user.id ?? "anon"],
+    [CACHE_TAGS.product(id)],
     {
       revalidate: CACHE_TIMES.PRODUCT_DETAIL,
       tags: [CACHE_TAGS.product(id)],
@@ -116,9 +110,6 @@ async function getById(id: string): Promise<Product | null> {
 
 async function getByIds(ids: string[]): Promise<Product[]> {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
   const sortedIds = [...ids].sort();
 
   const getByIdsCached = unstable_cache(
@@ -141,7 +132,7 @@ async function getByIds(ids: string[]): Promise<Product[]> {
 
       return parsed.data.map(mapProduct);
     },
-    [CACHE_TAGS.products, "batch", ...sortedIds, session?.user.id ?? "anon"],
+    [CACHE_TAGS.products, "batch", ...sortedIds],
     {
       revalidate: CACHE_TIMES.PRODUCTS,
       tags: [CACHE_TAGS.products, ...sortedIds.map(CACHE_TAGS.product)],
@@ -154,9 +145,6 @@ async function getProductsFiltered(
   filters: ProductFilters,
 ): Promise<Product[]> {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
   const cacheKey = [
     CACHE_TAGS.products,
@@ -166,7 +154,6 @@ async function getProductsFiltered(
     filters.minPrice?.toString() || "",
     filters.maxPrice?.toString() || "",
     filters.search || "",
-    session?.user.id ?? "anon",
   ];
 
   const getProductsFilteredCached = unstable_cache(

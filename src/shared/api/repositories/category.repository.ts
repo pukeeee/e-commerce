@@ -30,9 +30,6 @@ const mapCategory = (raw: RawCategory): Category => ({
 
 async function getAll(): Promise<Category[]> {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
   const getAllCached = unstable_cache(
     async () => {
@@ -48,7 +45,7 @@ async function getAll(): Promise<Category[]> {
       return (data as RawCategory[] | null)?.map(mapCategory) ?? [];
     },
     // ✅ Ключ кешу тепер унікальний для користувача (або 'anon' для всіх анонімів)
-    [CACHE_TAGS.categories, session?.user.id ?? "anon"],
+    [CACHE_TAGS.categories],
     {
       revalidate: CACHE_TIMES.CATEGORIES,
       tags: [CACHE_TAGS.categories],
@@ -60,9 +57,6 @@ async function getAll(): Promise<Category[]> {
 
 async function getBySlug(slug: string): Promise<Category | null> {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
   const getBySlugCached = unstable_cache(
     async () => {
@@ -79,7 +73,7 @@ async function getBySlug(slug: string): Promise<Category | null> {
       return data ? mapCategory(data as RawCategory) : null;
     },
     // ✅ Ключ кешу тепер унікальний для slug ТА користувача
-    [CACHE_TAGS.category(slug), session?.user.id ?? "anon"],
+    [CACHE_TAGS.category(slug)],
     {
       revalidate: CACHE_TIMES.CATEGORIES,
       tags: [CACHE_TAGS.category(slug)],
