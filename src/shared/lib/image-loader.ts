@@ -40,7 +40,7 @@ export default function imageLoader({
         width: width.toString(),
         quality: quality.toString(),
         resize: "contain", // або 'cover', 'fill'
-        // format: 'webp', // Supabase автоматично визначає найкращий формат
+        // format: "webp", // Supabase автоматично визначає найкращий формат
       });
 
       return `${url.origin}${transformPath}?${params.toString()}`;

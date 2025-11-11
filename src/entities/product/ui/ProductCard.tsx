@@ -53,9 +53,9 @@ export function ProductCard({
       <div className="flex flex-1 flex-col p-4">
         <Link
           href={`/products/${product.id}`}
-          className="hover:text-primary transition-colors"
+          className="flex-1 hover:text-primary transition-colors"
         >
-          <h3 className="flex-1 font-semibold leading-tight tracking-tight">
+          <h3 className="font-semibold leading-tight tracking-tight">
             {product.name}
           </h3>
         </Link>
