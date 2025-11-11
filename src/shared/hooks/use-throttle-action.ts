@@ -1,37 +1,55 @@
 import { useCallback, useRef } from "react";
 
 /**
- * ✅ Reusable hook для throttling любых действий
+ * ✅ Reusable hook для throttling, що використовує sessionStorage для
+ * збереження стану між перезавантаженнями сторінки.
+ * @param key - Унікальний ключ для зберігання стану в sessionStorage.
+ * @param action - Функція, яку потрібно "загальмувати".
+ * @param delay - Інтервал затримки в мілісекундах.
  */
 export function useThrottleAction<T extends (...args: unknown[]) => void>(
+  key: string,
   action: T,
   delay: number,
 ) {
-  const lastExecutedRef = useRef<number>(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const getSessionLastExecuted = () => {
+    const item = sessionStorage.getItem(key);
+    return item ? parseInt(item, 10) : 0;
+  };
+
+  const setSessionLastExecuted = (time: number) => {
+    sessionStorage.setItem(key, time.toString());
+  };
 
   const throttledAction = useCallback(
     (...args: Parameters<T>) => {
       const now = Date.now();
-      const timeSinceLastExecution = now - lastExecutedRef.current;
+      const lastExecuted = getSessionLastExecuted();
+      const timeSinceLastExecution = now - lastExecuted;
 
-      // Если прошло достаточно времени - выполняем сразу
+      // Якщо пройшло достатньо часу - виконуємо відразу
       if (timeSinceLastExecution >= delay) {
-        lastExecutedRef.current = now;
+        setSessionLastExecuted(now);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
         return action(...args);
       }
 
-      // Иначе планируем выполнение
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      // Інакше плануємо виконання, якщо ще немає запланованого
+      if (!timeoutRef.current) {
+        timeoutRef.current = setTimeout(() => {
+          const newNow = Date.now();
+          setSessionLastExecuted(newNow);
+          timeoutRef.current = null;
+          action(...args);
+        }, delay - timeSinceLastExecution);
       }
-
-      timeoutRef.current = setTimeout(() => {
-        lastExecutedRef.current = Date.now();
-        action(...args);
-      }, delay - timeSinceLastExecution);
     },
-    [action, delay],
+    [key, action, delay],
   );
 
   return throttledAction;

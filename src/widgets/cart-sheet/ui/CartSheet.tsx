@@ -95,7 +95,11 @@ export const CartSheet = () => {
     }
   }, [syncWithServer]);
 
-  const throttledSync = useThrottleAction(syncCart, CACHE_TIMES.SYNC_INTERVAL);
+  const throttledSync = useThrottleAction(
+    "cart_sync",
+    syncCart,
+    CACHE_TIMES.SYNC_INTERVAL,
+  );
 
   useEffect(() => {
     if (isOpen) {
