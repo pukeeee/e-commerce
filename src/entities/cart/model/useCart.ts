@@ -127,3 +127,11 @@ export function useCart<T>(selector: (state: CartStoreState) => T): T {
 
 // Експортуємо сам стор для окремих випадків
 export { useCartStoreBase };
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === useCartStoreBase.persist.getOptions().name) {
+      useCartStoreBase.persist.rehydrate();
+    }
+  });
+}

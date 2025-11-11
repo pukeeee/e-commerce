@@ -1,27 +1,24 @@
 "use client";
 
-import { useCart } from "@/entities/cart";
-import { calculateCartTotals } from "@/entities/cart/lib/calculations";
-import { Button } from "@/shared/ui/button";
+import { useCartItems } from "@/entities/cart";
 import { formatPrice } from "@/shared/lib/utils";
-import { ClearCartButton } from "@/features/clear-cart/ui/ClearCartButton";
 import { useMemo } from "react";
-import Link from "next/link";
 
 /**
- * @description Віджет, що відображає підсумок кошика: загальну вартість та кнопки дій.
+ * @description Віджет, що відображає підсумок кошика: загальну вартість.
  */
 export const CartSummary = () => {
-  // 1. Отримуємо тільки `items` зі стору.
-  const items = useCart((s) => s.items);
+  const items = useCartItems();
 
-  // 2. Обчислюємо потрібні значення за допомогою `useMemo` для кешування.
-  const { total, itemCount } = useMemo(
-    () => calculateCartTotals(items),
-    [items],
-  );
+  const { subtotal, itemCount } = useMemo(() => {
+    const itemsArray = Object.values(items);
+    const subtotal = itemsArray.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+    return { subtotal, itemCount: itemsArray.length };
+  }, [items]);
 
-  // 3. Перевіряємо `totalCount`, як і раніше.
   if (itemCount === 0) {
     return null;
   }
@@ -30,7 +27,7 @@ export const CartSummary = () => {
     <div className="border-t p-4">
       <div className="mb-4 flex justify-between text-lg font-semibold">
         <span>Разом:</span>
-        <span>{formatPrice(total)}</span>
+        <span>{formatPrice(subtotal)}</span>
       </div>
     </div>
   );

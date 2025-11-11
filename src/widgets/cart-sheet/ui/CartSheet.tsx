@@ -11,7 +11,7 @@ import {
 } from "@/shared/ui/sheet";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
-import { useCart, useCartStoreBase } from "@/entities/cart";
+import { useCart, useCartCount, useCartStoreBase } from "@/entities/cart";
 import { CartItemsList } from "./CartItemsList";
 import { CartSummary } from "./CartSummary";
 import { toast } from "sonner";
@@ -32,8 +32,7 @@ import { useThrottleAction } from "@/shared/hooks/use-throttle-action";
 
 const CartBadge = memo(() => {
   const isHydrated = useCart((state) => state.isHydrated);
-  const items = useCart((state) => state.items);
-  const count = useMemo(() => Object.keys(items).length, [items]);
+  const count = useCartCount();
 
   if (!isHydrated || count === 0) return null;
 
@@ -58,8 +57,7 @@ export const CartSheet = () => {
   const syncWithServer = useCart((state) => state.syncWithServer);
   const [isSyncing, startSyncTransition] = useTransition();
 
-  const items = useCart((state) => state.items);
-  const count = useMemo(() => Object.keys(items).length, [items]);
+  const count = useCartCount();
 
   const syncCart = useCallback(async () => {
     const currentItems = useCartStoreBase.getState().items;

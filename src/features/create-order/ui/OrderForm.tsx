@@ -3,9 +3,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 
-import { useCartStoreBase } from "@/entities/cart";
+import { useCartItems } from "@/entities/cart";
 import {
   CreateOrderPayloadSchema,
   PaymentMethodEnum,
@@ -38,10 +38,11 @@ interface OrderFormProps {
 }
 
 export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
-  // ✅ Обчислюємо початкові значення ЛИШЕ ОДИН РАЗ при першому рендері
-  const [defaultValues] = useState(() => {
-    const initialState = useCartStoreBase.getState();
-    const orderItems = Object.values(initialState.items).map((item) => ({
+  const items = useCartItems();
+
+  const { orderItems, totalAmount, itemCount } = useMemo(() => {
+    const itemsArray = Object.values(items);
+    const orderItems = itemsArray.map((item) => ({
       productId: item.id,
       quantity: item.quantity,
       price: item.price,
@@ -50,26 +51,24 @@ export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
       (sum, item) => sum + item.price * item.quantity,
       0,
     );
+    return { orderItems, totalAmount, itemCount: itemsArray.length };
+  }, [items]);
 
-    return {
+  const form = useForm<OrderFormValues>({
+    resolver: zodResolver(CreateOrderPayloadSchema),
+    defaultValues: {
       customerName: "",
       customerEmail: "",
       customerPhone: "",
       shippingAddress: "",
       orderNote: "",
-      paymentMethod: "cash_on_delivery" as const,
-      items: orderItems,
-      totalAmount: totalAmount,
-    };
+      paymentMethod: "cash_on_delivery",
+      items: orderItems, // Початкові значення з useMemo
+      totalAmount: totalAmount, // Початкові значення з useMemo
+    },
   });
 
-  const form = useForm<OrderFormValues>({
-    resolver: zodResolver(CreateOrderPayloadSchema),
-    // ✅ Використовуємо стабільні початкові значення
-    defaultValues,
-  });
-
-  const { setError } = form;
+  const { setError, setValue } = form;
 
   useEffect(() => {
     if (state.fieldErrors) {
@@ -84,28 +83,27 @@ export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
     }
   }, [state.fieldErrors, setError]);
 
-  async function onSubmit(data: OrderFormValues) {
-    // Беремо найсвіжіші дані з кошика прямо зі стору
-    const { items: latestItemsMap } = useCartStoreBase.getState();
-    const latestItemsArray = Object.values(latestItemsMap);
+  // Синхронізація форми з даними кошика
+  useEffect(() => {
+    setValue("items", orderItems);
+    setValue("totalAmount", totalAmount);
+  }, [orderItems, totalAmount, setValue]);
 
-    // Обчислюємо загальну суму на основі найсвіжіших даних
-    const latestTotal = latestItemsArray.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0,
+  // Якщо кошик порожній, показуємо відповідне повідомлення
+  if (itemCount === 0 && !isPending) {
+    return (
+      <div className="text-center">
+        <h3 className="text-xl font-semibold">Ваш кошик порожній</h3>
+        <p className="mt-2 text-muted-foreground">
+          Додайте товари, щоб продовжити оформлення замовлення.
+        </p>
+      </div>
     );
+  }
 
-    const payload = {
-      ...data,
-      items: latestItemsArray.map((item) => ({
-        productId: item.id,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-      totalAmount: latestTotal,
-    };
-
-    await createOrder(payload);
+  async function onSubmit(data: OrderFormValues) {
+    // Дані вже синхронізовані, просто викликаємо екшен
+    await createOrder(data);
   }
 
   return (
