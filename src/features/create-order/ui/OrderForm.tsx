@@ -3,9 +3,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 
-import { useCart } from "@/entities/cart";
+import { useCartStoreBase } from "@/entities/cart";
 import {
   CreateOrderPayloadSchema,
   PaymentMethodEnum,
@@ -38,37 +38,35 @@ interface OrderFormProps {
 }
 
 export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
-  const items = useCart((state) => state.items);
-
-  // ✅ Вичисляємо items і total напряму
-  const orderData = useMemo(() => {
-    const orderItems = Object.values(items).map((item) => ({
+  // ✅ Обчислюємо початкові значення ЛИШЕ ОДИН РАЗ при першому рендері
+  const [defaultValues] = useState(() => {
+    const initialState = useCartStoreBase.getState();
+    const orderItems = Object.values(initialState.items).map((item) => ({
       productId: item.id,
       quantity: item.quantity,
       price: item.price,
     }));
-
     const totalAmount = orderItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0,
     );
 
-    return { orderItems, totalAmount };
-  }, [items]);
-
-  const form = useForm<OrderFormValues>({
-    resolver: zodResolver(CreateOrderPayloadSchema),
-    defaultValues: {
+    return {
       customerName: "",
       customerEmail: "",
       customerPhone: "",
       shippingAddress: "",
       orderNote: "",
-      paymentMethod: "cash_on_delivery",
-      // ✅ Використовуємо вичислені значення напряму
-      items: orderData.orderItems,
-      totalAmount: orderData.totalAmount,
-    },
+      paymentMethod: "cash_on_delivery" as const,
+      items: orderItems,
+      totalAmount: totalAmount,
+    };
+  });
+
+  const form = useForm<OrderFormValues>({
+    resolver: zodResolver(CreateOrderPayloadSchema),
+    // ✅ Використовуємо стабільні початкові значення
+    defaultValues,
   });
 
   const { setError } = form;
@@ -86,13 +84,25 @@ export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
     }
   }, [state.fieldErrors, setError]);
 
-  // ✅ ОДИН обробник замість декількох useEffect'ів
   async function onSubmit(data: OrderFormValues) {
-    // Оновлюємо актуальні дані перед відправкою
+    // Беремо найсвіжіші дані з кошика прямо зі стору
+    const { items: latestItemsMap } = useCartStoreBase.getState();
+    const latestItemsArray = Object.values(latestItemsMap);
+
+    // Обчислюємо загальну суму на основі найсвіжіших даних
+    const latestTotal = latestItemsArray.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+
     const payload = {
       ...data,
-      items: orderData.orderItems,
-      totalAmount: orderData.totalAmount,
+      items: latestItemsArray.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      totalAmount: latestTotal,
     };
 
     await createOrder(payload);
@@ -107,7 +117,6 @@ export function OrderForm({ isPending, state, createOrder }: OrderFormProps) {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-6"
         >
-          {/* ✅ Показываем server errors через React Hook Form */}
           {state.serverError && (
             <ErrorMessage
               title="Помилка сервера"
