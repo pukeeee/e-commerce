@@ -1,13 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 /**
- * Створює серверний клієнт Supabase.
- * Ця функція не кешується і призначена для використання в Server Actions,
- * де потрібен новий екземпляр клієнта для кожної операції.
- * Next.js автоматично мемоїзує виклик cookies() в межах одного запиту.
+ * Створює мемоїзований (кешований) серверний клієнт Supabase для використання
+ * в серверних компонентах React.
+ *
+ * Завдяки `React.cache`, функція `createServerClient` буде викликана лише один раз
+ * протягом одного серверного рендеру, а всі наступні виклики `createClient`
+ * в межах того ж запиту повертатимуть той самий екземпляр клієнта.
+ * Це значно підвищує продуктивність та запобігає зайвим з'єднанням з БД.
  */
-export async function createClient() {
+export const createClient = cache(async () => {
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -31,4 +35,4 @@ export async function createClient() {
       },
     },
   );
-}
+});
