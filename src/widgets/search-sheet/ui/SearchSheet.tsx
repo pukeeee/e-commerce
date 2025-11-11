@@ -18,44 +18,54 @@ import {
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { useState, useEffect, useTransition, useRef } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { Skeleton } from "@/shared/ui/skeleton";
 import type { Product } from "@/entities/product";
-import { useDebounce } from "@/shared/hooks/use-debounce";
+import { useDebouncedCallback } from "use-debounce";
 import { searchProducts } from "@/features/search-products/model/action";
+import { DEBOUNCE } from "@/shared/config/constants";
+import { ProductSearchCard } from "@/entities/product/ui/ProductSearchCard";
 
-// Компонент для відображення результатів, поки що простий
+// Компонент для відображення результатів
 const SearchResults = ({
   products,
   isLoading,
   onClose,
+  searchQuery,
 }: {
   products: Product[];
   isLoading: boolean;
   onClose: () => void;
+  searchQuery: string;
 }) => {
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
+      <div className="space-y-3 pt-4">
+        <Skeleton className="h-20 w-full" />
       </div>
     );
   }
 
-  // TODO: Замінити на красиві картки товарів та обгорнути в Link
+  if (searchQuery.trim() && !isLoading && products.length === 0) {
+    return (
+      <div className="pt-10 pb-10 text-center">
+        <p className="text-lg font-medium">Нічого не знайдено</p>
+        <p className="text-muted-foreground">
+          Спробуйте змінити ваш пошуковий запит.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       {products.map((product) => (
-        <div
+        <ProductSearchCard
           key={product.id}
-          onClick={onClose}
-          className="p-2 border rounded-md cursor-pointer hover:bg-accent transition-colors"
-        >
-          <p>{product.name}</p>
-          <p className="text-sm text-muted-foreground">{product.price} грн</p>
-        </div>
+          product={product}
+          onClose={onClose}
+        />
       ))}
     </div>
   );
@@ -71,20 +81,12 @@ export const SearchSheet = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
   const [products, setProducts] = useState<Product[]>([]);
   const [isPending, startTransition] = useTransition();
-  const lastSearchedQueryRef = useRef<string | null>(null);
 
-  // Функція для виконання пошуку
-  const performSearch = (query: string) => {
+  // ✅ Створюємо debounced-версію функції пошуку, використовуючи константу
+  const debouncedSearch = useDebouncedCallback((query: string) => {
     const trimmedQuery = query.trim();
-    // Не виконувати пошук, якщо запит вже був виконаний або не змінився
-    if (trimmedQuery === lastSearchedQueryRef.current) {
-      return;
-    }
-    lastSearchedQueryRef.current = trimmedQuery;
-
     if (trimmedQuery) {
       startTransition(async () => {
         const foundProducts = await searchProducts(trimmedQuery);
@@ -93,29 +95,31 @@ export const SearchSheet = () => {
     } else {
       setProducts([]);
     }
-  };
+  }, DEBOUNCE.DELAY);
 
-  useEffect(() => {
-    // Виконуємо пошук із затримкою під час набору тексту
-    performSearch(debouncedSearchQuery);
-  }, [debouncedSearchQuery]);
+  // ✅ Обробник зміни вводу
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setSearchQuery(newValue);
+    debouncedSearch(newValue);
+  };
 
   // Скидаємо стан при закритті
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery("");
       setProducts([]);
-      lastSearchedQueryRef.current = null;
+      debouncedSearch.cancel(); // Скасовуємо будь-які заплановані виклики
     }
-  }, [isOpen]);
+  }, [isOpen, debouncedSearch]);
 
   // Обробник натискання клавіш в полі вводу
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault(); // Запобігаємо стандартній поведінці (наприклад, відправці форми)
 
-      // Виконуємо пошук негайно
-      performSearch(searchQuery);
+      // ✅ Виконуємо пошук негайно, скасовуючи затримку
+      debouncedSearch.flush();
 
       // На мобільних пристроях прибираємо фокус, щоб закрити клавіатуру.
       // На десктопі фокус залишається в полі вводу, щоб уникнути фокусування на діалозі.
@@ -130,7 +134,7 @@ export const SearchSheet = () => {
       <Input
         placeholder="Що ви шукаєте?"
         value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        onChange={handleSearchChange}
         className="h-12 text-lg pr-12"
         onFocus={(e) => e.target.select()}
         onKeyDown={handleKeyDown}
@@ -148,7 +152,7 @@ export const SearchSheet = () => {
             <span className="sr-only">Відкрити пошук</span>
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-2xl p-6">
+        <DialogContent className="sm:max-w-xl p-6">
           <DialogHeader>
             <DialogTitle>Пошук</DialogTitle>
             <DialogDescription>
@@ -161,6 +165,7 @@ export const SearchSheet = () => {
               products={products}
               isLoading={isPending}
               onClose={() => setIsOpen(false)}
+              searchQuery={searchQuery}
             />
           </div>
         </DialogContent>
@@ -191,6 +196,7 @@ export const SearchSheet = () => {
             products={products}
             isLoading={isPending}
             onClose={() => setIsOpen(false)}
+            searchQuery={searchQuery}
           />
         </div>
       </SheetContent>

@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useTransition, useCallback, useMemo } from "react";
+import {
+  useState,
+  useTransition,
+  useCallback,
+  useMemo,
+  useEffect,
+} from "react";
 import {
   Select,
   SelectContent,
@@ -34,6 +40,12 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
   const [maxPrice, setMaxPrice] = useState(
     currentFilters.maxPrice?.toString() || "",
   );
+
+  // ✅ Оновлюємо при зміні URL (наприклад, назад/вперед)
+  useEffect(() => {
+    setMinPrice(currentFilters.minPrice?.toString() || "");
+    setMaxPrice(currentFilters.maxPrice?.toString() || "");
+  }, [currentFilters.minPrice, currentFilters.maxPrice]);
 
   // ✅ Мемоїзована функція оновлення
   const updateFilters = useCallback(
