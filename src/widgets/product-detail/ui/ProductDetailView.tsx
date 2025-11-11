@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { motion, Variants } from "motion/react";
+// Виправлено імпорт для Motion One
+import { motion } from "motion/react";
+import type { Variants } from "motion";
 import type { Product } from "@/entities/product";
 import { formatPrice } from "@/shared/lib/utils";
 import { AddToCartButton } from "@/features/add-to-cart";
@@ -147,17 +149,25 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
   const features = getMockFeatures(product.name);
   const imageUrl = product.imageUrl || "/images/placeholder.svg";
 
+  // Стиль для оптимізації анімації (уникаємо артефактів)
+  const animationStyle = { backfaceVisibility: "hidden" as const };
+
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
       className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12"
+      style={animationStyle}
     >
-      {/* Ліва колонка - Зображення */}
-      <motion.div variants={imageVariants} className="relative">
+      {/* Ліва колонка - Зображення (виправлено проблему з sticky) */}
+      <div className="relative">
         <div className="sticky top-24">
-          <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted/30 border shadow-lg">
+          <motion.div
+            variants={imageVariants}
+            className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted/30 border shadow-lg"
+            style={animationStyle}
+          >
             <Image
               src={imageUrl}
               alt={product.name}
@@ -165,15 +175,21 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
               priority
               className="object-contain p-8"
               sizes="(max-width: 1024px) 100vw, 50vw"
+              // Додано стиль для GPU-прискорення
+              style={{ transform: "translateZ(0)" }}
             />
-          </div>
+          </motion.div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Права колонка - Інформація */}
       <div className="space-y-6">
         {/* Назва та ціна */}
-        <motion.div variants={itemVariants} className="space-y-4">
+        <motion.div
+          variants={itemVariants}
+          className="space-y-4"
+          style={animationStyle}
+        >
           <div>
             <Badge variant="secondary" className="mb-3">
               Новинка
@@ -196,18 +212,23 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
           <motion.p
             variants={itemVariants}
             className="text-lg text-muted-foreground leading-relaxed"
+            style={animationStyle}
           >
             {product.description}
           </motion.p>
         )}
 
         {/* Кнопка додавання в кошик */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} style={animationStyle}>
           <AddToCartButton product={product} />
         </motion.div>
 
         {/* Основні характеристики */}
-        <motion.div variants={itemVariants} className="space-y-3">
+        <motion.div
+          variants={itemVariants}
+          className="space-y-3"
+          style={animationStyle}
+        >
           <h2 className="text-xl font-semibold">Основні характеристики</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {specifications.map((spec, index) => {
@@ -217,6 +238,7 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
                   key={index}
                   variants={itemVariants}
                   className="flex items-start gap-3 p-4 rounded-lg bg-muted/30 border"
+                  style={animationStyle}
                 >
                   <Icon className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
@@ -232,7 +254,11 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
         </motion.div>
 
         {/* Переваги */}
-        <motion.div variants={itemVariants} className="space-y-3">
+        <motion.div
+          variants={itemVariants}
+          className="space-y-3"
+          style={animationStyle}
+        >
           <h2 className="text-xl font-semibold">Чому варто купити</h2>
           <ul className="space-y-2">
             {features.map((feature, index) => (
@@ -240,6 +266,7 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
                 key={index}
                 variants={itemVariants}
                 className="flex items-start gap-2"
+                style={animationStyle}
               >
                 <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <span className="text-muted-foreground">{feature}</span>
@@ -249,7 +276,7 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
         </motion.div>
 
         {/* Детальна інформація в акордеоні */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} style={animationStyle}>
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="description">
               <AccordionTrigger>Детальний опис</AccordionTrigger>

@@ -27,6 +27,12 @@ interface FilterPanelProps {
   currentFilters: ProductFilters;
 }
 
+/**
+ * @feature FilterPanel
+ * @description Адаптивна панель для фільтрації та сортування товарів.
+ * - На десктопі (>= 1024px) відображається як статична колонка.
+ * - На мобільних/планшетах відображається як випадаючий блок.
+ */
 export function FilterPanel({ currentFilters }: FilterPanelProps) {
   const router = useRouter();
   const pathname = usePathname();

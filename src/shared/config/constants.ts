@@ -49,5 +49,5 @@ export const CACHE_TIMES = {
 
 export const DEBOUNCE = {
   // --- Клієнтська логіка (в мілісекундах, для setTimeout) ---
-  DELAY: 500, // 500 мілісекунд
+  DELAY: 1000, // 1000 мілісекунд
 };

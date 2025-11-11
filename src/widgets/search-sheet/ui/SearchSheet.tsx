@@ -41,7 +41,7 @@ const SearchResults = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="space-y-3 pt-4">
+      <div className="space-y-3">
         <Skeleton className="h-20 w-full" />
       </div>
     );
@@ -49,7 +49,7 @@ const SearchResults = ({
 
   if (searchQuery.trim() && !isLoading && products.length === 0) {
     return (
-      <div className="pt-10 pb-10 text-center">
+      <div className="pb-10 text-center">
         <p className="text-lg font-medium">Нічого не знайдено</p>
         <p className="text-muted-foreground">
           Спробуйте змінити ваш пошуковий запит.
@@ -83,6 +83,7 @@ export const SearchSheet = () => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [products, setProducts] = useState<Product[]>([]);
   const [isPending, startTransition] = useTransition();
+  const [isSearching, setIsSearching] = useState(false);
 
   // ✅ Створюємо debounced-версію функції пошуку, використовуючи константу
   const debouncedSearch = useDebouncedCallback((query: string) => {
@@ -91,16 +92,24 @@ export const SearchSheet = () => {
       startTransition(async () => {
         const foundProducts = await searchProducts(trimmedQuery);
         setProducts(foundProducts);
+        setIsSearching(false);
       });
     } else {
       setProducts([]);
+      setIsSearching(false);
     }
   }, DEBOUNCE.DELAY);
 
-  // ✅ Обробник зміни вводу
+  // Обробник зміни вводу
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchQuery(newValue);
+    if (newValue.trim()) {
+      setIsSearching(true);
+    } else {
+      setProducts([]);
+      setIsSearching(false);
+    }
     debouncedSearch(newValue);
   };
 
@@ -163,7 +172,7 @@ export const SearchSheet = () => {
           <div className="mt-4 overflow-y-auto max-h-[60vh]">
             <SearchResults
               products={products}
-              isLoading={isPending}
+              isLoading={isPending || isSearching}
               onClose={() => setIsOpen(false)}
               searchQuery={searchQuery}
             />
@@ -194,7 +203,7 @@ export const SearchSheet = () => {
         <div className="mt-2 flex-1 overflow-y-auto">
           <SearchResults
             products={products}
-            isLoading={isPending}
+            isLoading={isPending || isSearching}
             onClose={() => setIsOpen(false)}
             searchQuery={searchQuery}
           />

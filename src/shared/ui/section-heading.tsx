@@ -19,6 +19,7 @@ export function SectionHeading({ children, className }: SectionHeadingProps) {
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: 0.2 }}
+      style={{ willChange: "transform", backfaceVisibility: "hidden" }}
       className={cn("text-2xl font-bold mb-6", className)}
     >
       {children}
