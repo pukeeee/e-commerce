@@ -5,7 +5,8 @@ import Link from "next/link";
 
 interface ProductCardProps {
   product: PublicProduct;
-  actionSlot?: React.ReactNode;
+  footerSlot?: React.ReactNode;
+  headerSlot?: React.ReactNode;
   priority?: boolean;
 }
 
@@ -13,11 +14,13 @@ interface ProductCardProps {
  * @entity ProductCard
  * @description Картка товару для відображення в каталозі або списках.
  * @param product Дані про товар.
- * @param actionSlot Слот для кнопки дії (наприклад, "Додати в кошик").
+ * @param footerSlot Слот для дій внизу картки (наприклад, "Додати в кошик").
+ * @param headerSlot Слот для дій вгорі картки (наприклад, "В обране").
  */
 export function ProductCard({
   product,
-  actionSlot,
+  footerSlot,
+  headerSlot,
   priority,
 }: ProductCardProps) {
   return (
@@ -25,6 +28,10 @@ export function ProductCard({
       className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-sm
    transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg"
     >
+      {headerSlot && (
+        <div className="absolute right-2 top-2 z-10">{headerSlot}</div>
+      )}
+
       <Link href={`/products/${product.id}`} className="block">
         <div className="relative aspect-square w-full overflow-hidden bg-muted">
           {product.imageUrl ? (
@@ -60,7 +67,7 @@ export function ProductCard({
           </h3>
         </Link>
         <p className="mt-2 text-lg font-bold">{formatPrice(product.price)}</p>
-        {actionSlot && <div className="mt-4">{actionSlot}</div>}
+        {footerSlot && <div className="mt-4">{footerSlot}</div>}
       </div>
     </div>
   );

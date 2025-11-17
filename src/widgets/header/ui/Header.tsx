@@ -9,10 +9,11 @@ import { useIsMobile } from "@/shared/hooks/use-media-query";
 import { MobileMenuSheet } from "@/widgets/mobile-menu-sheet/ui/MobileMenuSheet";
 import { memo, useState, useEffect } from "react";
 import { SearchSheet } from "@/widgets/search-sheet";
+import { WishlistSheet, WishlistButton } from "@/widgets/wishlist-sheet";
 
 const HeaderLogo = memo(() => (
-  <Link href="/" className="flex items-center gap-2">
-    <Apple className="h-6 w-6" />
+  <Link href="/" className="flex items-center gap-1">
+    <Apple className="h-6 w-6 text-primary" />
     <span className="text-lg font-bold tracking-tight">The Orchard</span>
   </Link>
 ));
@@ -25,6 +26,7 @@ const DesktopNav = memo(() => (
     </Button>
     <ThemeToggle />
     <SearchSheet />
+    <WishlistSheet trigger={<WishlistButton />} />
     <CartSheet />
   </nav>
 ));
@@ -38,6 +40,7 @@ const MobileNav = memo(() => (
     </div>
     <div className="flex items-center gap-2">
       <SearchSheet />
+      <WishlistSheet trigger={<WishlistButton />} />
       <CartSheet />
     </div>
   </>

@@ -1,6 +1,7 @@
 import { ProductCard } from "@/entities/product/ui/ProductCard";
 import type { PublicProduct } from "@/entities/product";
 import { AddToCartButton } from "@/features/add-to-cart";
+import { ToggleFavoriteButton } from "@/features/toggle-favorite";
 
 interface ProductGridProps {
   products: PublicProduct[];
@@ -31,7 +32,8 @@ export function ProductGrid({ products }: ProductGridProps) {
         <ProductCard
           key={product.id}
           product={product}
-          actionSlot={<AddToCartButton product={product} />}
+          headerSlot={<ToggleFavoriteButton productId={product.id} />}
+          footerSlot={<AddToCartButton product={product} />}
           priority={index < 4}
         />
       ))}

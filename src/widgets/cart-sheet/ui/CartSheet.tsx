@@ -15,14 +15,7 @@ import { useCart, useCartCount, useCartStoreBase } from "@/entities/cart";
 import { CartItemsList } from "./CartItemsList";
 import { CartSummary } from "./CartSummary";
 import { toast } from "sonner";
-import {
-  useMemo,
-  memo,
-  useState,
-  useEffect,
-  useTransition,
-  useCallback,
-} from "react";
+import { memo, useState, useEffect, useTransition, useCallback } from "react";
 import { getProductsByIdsAction } from "@/features/get-products-by-ids/action";
 import { CartItemSkeleton } from "@/shared/ui/skeleton";
 import { CACHE_TIMES } from "@/shared/config/constants";
