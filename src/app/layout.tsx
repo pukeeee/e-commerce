@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Крамниця | Найкращі товари",
+    default: "The Orchard | Найкращі товари",
     template: "%s | Крамниця",
   },
   description: "Демонстраційний інтернет-магазин, створений з Next.js",
@@ -31,11 +31,11 @@ export const metadata: Metadata = {
     url: "https://e-commerce.reznichenko.dev",
     title: "Крамниця | Найкращі товари",
     description: "Демонстраційний інтернет-магазин, створений з Next.js",
-    siteName: "Крамниця",
+    siteName: "The Orchard",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Крамниця | Найкращі товари",
+    title: "The Orchard | Найкращі товари",
     description: "Демонстраційний інтернет-магазин, створений з Next.js",
   },
   robots: {

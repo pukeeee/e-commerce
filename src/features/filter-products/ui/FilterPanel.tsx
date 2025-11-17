@@ -22,6 +22,7 @@ import {
   type ProductFilters,
   type SortOption,
 } from "@/entities/product/model/filter-types";
+import type { KeyboardEvent } from "react";
 
 interface FilterPanelProps {
   currentFilters: ProductFilters;
@@ -29,9 +30,11 @@ interface FilterPanelProps {
 
 /**
  * @feature FilterPanel
- * @description Адаптивна панель для фільтрації та сортування товарів.
- * - На десктопі (>= 1024px) відображається як статична колонка.
- * - На мобільних/планшетах відображається як випадаючий блок.
+ * @description
+ * Клієнтський компонент, що надає користувачам інтерфейс для сортування та фільтрації товарів.
+ * Керує станом фільтрів, оновлює URL-параметри та взаємодіє з користувачем.
+ *
+ * @param currentFilters - Поточні активні фільтри, отримані з URL.
  */
 export function FilterPanel({ currentFilters }: FilterPanelProps) {
   const router = useRouter();
@@ -39,7 +42,7 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  // Local state
+  // Локальний стан для полів вводу, щоб не оновлювати URL на кожне натискання клавіші.
   const [minPrice, setMinPrice] = useState(
     currentFilters.minPrice?.toString() || "",
   );
@@ -47,18 +50,23 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
     currentFilters.maxPrice?.toString() || "",
   );
 
-  // ✅ Оновлюємо при зміні URL (наприклад, назад/вперед)
+  /**
+   * Синхронізує локальний стан інпутів з параметрами URL.
+   * Це потрібно, щоб поля оновлювалися при навігації (напр. кнопки "назад"/"вперед" у браузері).
+   */
   useEffect(() => {
     setMinPrice(currentFilters.minPrice?.toString() || "");
     setMaxPrice(currentFilters.maxPrice?.toString() || "");
   }, [currentFilters.minPrice, currentFilters.maxPrice]);
 
-  // ✅ Мемоїзована функція оновлення
+  /**
+   * Мемоїзована функція для оновлення параметрів пошуку в URL.
+   * Використовує `startTransition` для уникнення блокування UI під час оновлення.
+   */
   const updateFilters = useCallback(
     (updates: Partial<Omit<ProductFilters, "search">>) => {
       startTransition(() => {
         const params = new URLSearchParams(searchParams);
-
         Object.entries(updates).forEach(([key, value]) => {
           if (value === undefined || value === "" || value === null) {
             params.delete(key);
@@ -66,19 +74,28 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
             params.set(key, String(value));
           }
         });
-
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
       });
     },
     [searchParams, router, pathname],
   );
 
-  // ✅ Мемоїзована перевірка наявності активних фільтрів
+  /**
+   * Визначає, чи є активні фільтри (крім сортування),
+   * щоб показати або приховати кнопку "Скинути фільтри".
+   * Логіка базується на `currentFilters` з URL, а не на локальному стані інпутів.
+   */
   const hasActiveFilters = useMemo(() => {
-    return !!(minPrice || maxPrice || currentFilters.sort !== "newest");
-  }, [minPrice, maxPrice, currentFilters.sort]);
+    return (
+      currentFilters.minPrice !== undefined ||
+      currentFilters.maxPrice !== undefined
+    );
+  }, [currentFilters.minPrice, currentFilters.maxPrice]);
 
-  // ✅ Обробник для скидання з transition, що зберігає інші параметри (напр. глобальний пошук)
+  /**
+   * Скидає фільтри ціни, але зберігає поточне сортування.
+   * Очищує локальний стан та відповідні параметри в URL.
+   */
   const handleReset = useCallback(() => {
     setMinPrice("");
     setMaxPrice("");
@@ -86,76 +103,108 @@ export function FilterPanel({ currentFilters }: FilterPanelProps) {
       const params = new URLSearchParams(searchParams.toString());
       params.delete("minPrice");
       params.delete("maxPrice");
-      params.delete("sort");
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
   }, [pathname, router, searchParams]);
 
+  // Функції для застосування фільтрів при втраті фокусу або натисканні Enter.
+  const applyMinPrice = () => {
+    const value = minPrice ? Number(minPrice) : undefined;
+    if (value !== currentFilters.minPrice) {
+      updateFilters({ minPrice: value });
+    }
+  };
+
+  const applyMaxPrice = () => {
+    const value = maxPrice ? Number(maxPrice) : undefined;
+    if (value !== currentFilters.maxPrice) {
+      updateFilters({ maxPrice: value });
+    }
+  };
+
+  // Обробники натискання клавіші "Enter" для полів вводу ціни.
+  const handleMinPriceKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      applyMinPrice();
+    }
+  };
+
+  const handleMaxPriceKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      applyMaxPrice();
+    }
+  };
+
   return (
-    <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-      {/* Фільтр за ціною */}
-      <div className="flex gap-2 items-end">
-        <div className="w-32">
-          <label className="text-sm text-muted-foreground mb-1 block">
-            Ціна від
-          </label>
-          <Input
-            type="number"
-            placeholder="0"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            onBlur={() => {
-              const value = minPrice ? Number(minPrice) : undefined;
-              if (value !== currentFilters.minPrice) {
-                updateFilters({ minPrice: value });
-              }
-            }}
+    <div className="flex flex-col gap-8 h-full">
+      {/* Блок з основними елементами керування: сортування та фільтри */}
+      <div className="flex flex-col gap-4">
+        {/* Секція сортування */}
+        <div>
+          <label className="text-sm font-medium mb-2 block">Сортування</label>
+          <Select
+            value={currentFilters.sort}
+            onValueChange={(value) =>
+              updateFilters({ sort: value as SortOption })
+            }
             disabled={isPending}
-          />
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(SORT_OPTIONS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <div className="w-32">
-          <label className="text-sm text-muted-foreground mb-1 block">до</label>
-          <Input
-            type="number"
-            placeholder="∞"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            onBlur={() => {
-              const value = maxPrice ? Number(maxPrice) : undefined;
-              if (value !== currentFilters.maxPrice) {
-                updateFilters({ maxPrice: value });
-              }
-            }}
-            disabled={isPending}
-          />
+        {/* Секція фільтрації за ціною */}
+        <div>
+          <label className="text-sm font-medium mb-2 block">Ціна</label>
+          <div className="flex gap-2 items-center">
+            <Input
+              type="number"
+              placeholder="Від"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              onBlur={applyMinPrice}
+              onKeyDown={handleMinPriceKeyDown}
+              disabled={isPending}
+            />
+            <span className="text-muted-foreground">-</span>
+            <Input
+              type="number"
+              placeholder="До"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              onBlur={applyMaxPrice}
+              onKeyDown={handleMaxPriceKeyDown}
+              disabled={isPending}
+            />
+          </div>
         </div>
+        {/* Майбутні фільтри можна додавати тут */}
       </div>
 
-      {/* Сортування */}
-      <Select
-        value={currentFilters.sort}
-        onValueChange={(value) => updateFilters({ sort: value as SortOption })}
-        disabled={isPending}
-      >
-        <SelectTrigger className="w-48">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {Object.entries(SORT_OPTIONS).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
-              {label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Кнопка скидання */}
-      {hasActiveFilters && (
-        <Button variant="outline" onClick={handleReset} disabled={isPending}>
-          Скинути фільтри
-        </Button>
-      )}
+      {/* Блок з кнопкою скидання, що "прилипає" до низу контейнера */}
+      <div className="mt-auto">
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            disabled={isPending}
+            className="w-full"
+          >
+            Скинути фільтри
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

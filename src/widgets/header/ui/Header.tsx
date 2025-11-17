@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBagIcon } from "lucide-react";
+import { Apple } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { CartSheet } from "@/widgets/cart-sheet/ui/CartSheet";
 import { ThemeToggle } from "@/shared/ui/theme";
@@ -12,8 +12,8 @@ import { SearchSheet } from "@/widgets/search-sheet";
 
 const HeaderLogo = memo(() => (
   <Link href="/" className="flex items-center gap-2">
-    <ShoppingBagIcon className="h-6 w-6" />
-    <span className="text-lg font-bold tracking-tight">Крамниця</span>
+    <Apple className="h-6 w-6" />
+    <span className="text-lg font-bold tracking-tight">The Orchard</span>
   </Link>
 ));
 HeaderLogo.displayName = "HeaderLogo";

@@ -1,9 +1,7 @@
 "use client";
 
 import Image from "next/image";
-// Виправлено імпорт для Motion One
 import { motion } from "motion/react";
-import type { Variants } from "motion";
 import type { Product } from "@/entities/product";
 import { formatPrice } from "@/shared/lib/utils";
 import { AddToCartButton } from "@/features/add-to-cart";
@@ -28,36 +26,6 @@ import { SectionHeading } from "@/shared/ui/section-heading";
 interface ProductDetailViewProps {
   product: Product;
 }
-
-// Варіанти анімацій
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: "easeOut" },
-  },
-};
-
-const imageVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
-};
 
 // Тимчасові дані для характеристик (поки немає в БД)
 // TODO: Перенести в окрему модель після додавання в БД
@@ -153,18 +121,15 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
   const animationStyle = { backfaceVisibility: "hidden" as const };
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12"
-      style={animationStyle}
-    >
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
       {/* Ліва колонка - Зображення (виправлено проблему з sticky) */}
       <div className="relative">
         <div className="sticky top-24">
           <motion.div
-            variants={imageVariants}
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted/30 border shadow-lg"
             style={animationStyle}
           >
@@ -186,7 +151,10 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
       <div className="space-y-6">
         {/* Назва та ціна */}
         <motion.div
-          variants={itemVariants}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
           className="space-y-4"
           style={animationStyle}
         >
@@ -210,7 +178,10 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
         {/* Короткий опис */}
         {product.description && (
           <motion.p
-            variants={itemVariants}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
             className="text-lg text-muted-foreground leading-relaxed"
             style={animationStyle}
           >
@@ -219,13 +190,22 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
         )}
 
         {/* Кнопка додавання в кошик */}
-        <motion.div variants={itemVariants} style={animationStyle}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 }}
+          style={animationStyle}
+        >
           <AddToCartButton product={product} />
         </motion.div>
 
         {/* Основні характеристики */}
         <motion.div
-          variants={itemVariants}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut", delay: 0.4 }}
           className="space-y-3"
           style={animationStyle}
         >
@@ -234,11 +214,9 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
             {specifications.map((spec, index) => {
               const Icon = spec.icon;
               return (
-                <motion.div
+                <div
                   key={index}
-                  variants={itemVariants}
                   className="flex items-start gap-3 p-4 rounded-lg bg-muted/30 border"
-                  style={animationStyle}
                 >
                   <Icon className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
@@ -247,7 +225,7 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
                     </p>
                     <p className="text-sm font-semibold">{spec.value}</p>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
           </div>
@@ -255,28 +233,32 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
 
         {/* Переваги */}
         <motion.div
-          variants={itemVariants}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut", delay: 0.5 }}
           className="space-y-3"
           style={animationStyle}
         >
           <h2 className="text-xl font-semibold">Чому варто купити</h2>
           <ul className="space-y-2">
             {features.map((feature, index) => (
-              <motion.li
-                key={index}
-                variants={itemVariants}
-                className="flex items-start gap-2"
-                style={animationStyle}
-              >
+              <li key={index} className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <span className="text-muted-foreground">{feature}</span>
-              </motion.li>
+              </li>
             ))}
           </ul>
         </motion.div>
 
         {/* Детальна інформація в акордеоні */}
-        <motion.div variants={itemVariants} style={animationStyle}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut", delay: 0.6 }}
+          style={animationStyle}
+        >
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="description">
               <AccordionTrigger>Детальний опис</AccordionTrigger>
@@ -342,6 +324,6 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
           </Accordion>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }

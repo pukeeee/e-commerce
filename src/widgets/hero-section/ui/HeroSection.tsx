@@ -52,7 +52,7 @@ export function HeroSection() {
       initial="hidden"
       animate="visible"
       variants={heroVariants}
-      className="mb-16 text-center"
+      className="mb-24 mt-16 text-center"
       style={animationStyle}
     >
       <motion.h1
