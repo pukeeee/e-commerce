@@ -22,6 +22,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { SectionHeading } from "@/shared/ui/section-heading";
+import { ToggleFavoriteButton } from "@/features/toggle-favorite";
 
 interface ProductDetailViewProps {
   product: Product;
@@ -197,11 +198,16 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
           transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 }}
           style={animationStyle}
         >
-          <AddToCartSimple
-            product={product}
-            cartButtonText="Перейти до оформлення"
-            cartPath="/checkout"
-          />
+          <div className="flex items-center justify-between gap-x-4">
+            <ToggleFavoriteButton productId={product.id} />
+            <div className="flex-grow">
+              <AddToCartSimple
+                product={product}
+                cartButtonText="Перейти до оформлення"
+                cartPath="/checkout"
+              />
+            </div>
+          </div>
         </motion.div>
 
         {/* Основні характеристики */}

@@ -71,7 +71,7 @@ export const AddToCartSimple = memo<AddToCartSimpleProps>(
         <Button
           asChild
           size={size}
-          variant={variant}
+          variant="secondary"
           className={cn("w-full", className)}
         >
           <Link href={cartPath}>
@@ -96,7 +96,7 @@ export const AddToCartSimple = memo<AddToCartSimpleProps>(
         <span className="hidden sm:inline">Додати в кошик</span>
       </Button>
     );
-  }
+  },
 );
 
 AddToCartSimple.displayName = "AddToCartSimple";
