@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import {
   Sheet,
   SheetContent,
@@ -15,6 +16,7 @@ import { getProductsByIdsAction } from "@/features/get-products-by-ids/action";
 import type { PublicProduct } from "@/entities/product";
 import { WishlistItem } from "./WishlistItem";
 import { WishlistItemSkeleton } from "./WishlistItemSkeleton";
+import { useCartItems } from "@/entities/cart";
 
 interface WishlistSheetProps {
   trigger?: React.ReactNode;
@@ -31,6 +33,9 @@ export function WishlistSheet({
   const clearWishlist = useClearWishlist();
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [isPending, startTransition] = useTransition();
+
+  const cartItems = useCartItems();
+  const isAnyInCart = products.some((p) => cartItems[p.id]);
 
   useEffect(() => {
     if (productIds.length > 0) {
@@ -54,6 +59,10 @@ export function WishlistSheet({
 
   const handleClearAll = () => {
     clearWishlist();
+  };
+
+  const handleCheckoutClick = () => {
+    onOpenChange?.(false);
   };
 
   const renderContent = () => {
@@ -86,7 +95,14 @@ export function WishlistSheet({
             ))}
           </div>
         </div>
-        <SheetFooter className="px-6 py-4">
+        <SheetFooter className="grid gap-2 px-6 py-4">
+          {isAnyInCart && (
+            <Button asChild className="w-full">
+              <Link href="/checkout" onClick={handleCheckoutClick}>
+                Оформити замовлення
+              </Link>
+            </Button>
+          )}
           <Button variant="outline" onClick={handleClearAll} className="w-full">
             Очистити все
           </Button>

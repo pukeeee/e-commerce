@@ -2,8 +2,7 @@
 
 import { useCart } from "@/entities/cart";
 import { CartItemCard } from "@/entities/cart/ui/CartItemCard";
-import { ChangeQuantity } from "@/features/change-cart-item-quantity";
-import { RemoveItemButton } from "@/features/remove-cart-item";
+import { CartItemQuantity, RemoveFromCart } from "@/features/cart-management";
 
 /**
  * @description
@@ -37,8 +36,10 @@ export const CartItemsList = () => {
           key={item.id}
           item={item}
           // 4. Передаємо feature-компоненти у відповідні слоти.
-          quantityControl={<ChangeQuantity itemId={item.id} className="mt-2" />}
-          removeControl={<RemoveItemButton itemId={item.id} />}
+          quantityControl={
+            <CartItemQuantity productId={item.id} size="sm" className="mt-2" />
+          }
+          removeControl={<RemoveFromCart productId={item.id} variant="icon" />}
         />
       ))}
     </div>

@@ -14,14 +14,17 @@ export function useThrottleAction<T extends (...args: unknown[]) => void>(
 ) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const getSessionLastExecuted = () => {
+  const getSessionLastExecuted = useCallback(() => {
     const item = sessionStorage.getItem(key);
     return item ? parseInt(item, 10) : 0;
-  };
+  }, [key]);
 
-  const setSessionLastExecuted = (time: number) => {
-    sessionStorage.setItem(key, time.toString());
-  };
+  const setSessionLastExecuted = useCallback(
+    (time: number) => {
+      sessionStorage.setItem(key, time.toString());
+    },
+    [key],
+  );
 
   const throttledAction = useCallback(
     (...args: Parameters<T>) => {
@@ -49,7 +52,7 @@ export function useThrottleAction<T extends (...args: unknown[]) => void>(
         }, delay - timeSinceLastExecution);
       }
     },
-    [key, action, delay],
+    [action, delay, getSessionLastExecuted, setSessionLastExecuted],
   );
 
   return throttledAction;

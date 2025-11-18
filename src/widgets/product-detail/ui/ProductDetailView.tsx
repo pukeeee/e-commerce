@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import type { Product } from "@/entities/product";
 import { formatPrice } from "@/shared/lib/utils";
-import { AddToCartButton } from "@/features/add-to-cart";
+import { AddToCartSimple } from "@/features/cart-management";
 import { Badge } from "@/shared/ui/badge";
 import {
   Accordion,
@@ -197,7 +197,11 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
           transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 }}
           style={animationStyle}
         >
-          <AddToCartButton product={product} />
+          <AddToCartSimple
+            product={product}
+            cartButtonText="Перейти до оформлення"
+            cartPath="/checkout"
+          />
         </motion.div>
 
         {/* Основні характеристики */}

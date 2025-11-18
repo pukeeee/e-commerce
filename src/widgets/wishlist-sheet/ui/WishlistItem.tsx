@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import type { PublicProduct } from "@/entities/product";
 import { formatPrice } from "@/shared/lib/utils";
-import { AddToCartButton } from "@/features/add-to-cart";
+import { AddToCartSimple } from "@/features/cart-management";
 import { ToggleFavoriteButton } from "@/features/toggle-favorite";
 
 interface WishlistItemProps {
@@ -36,7 +36,7 @@ export const WishlistItem = ({ product }: WishlistItemProps) => {
           {formatPrice(product.price)}
         </p>
         <div className="mt-2 flex items-center gap-2">
-          <AddToCartButton product={product} />
+          <AddToCartSimple product={product} inCartBehavior="disabled" />
         </div>
       </div>
       <ToggleFavoriteButton productId={product.id} />

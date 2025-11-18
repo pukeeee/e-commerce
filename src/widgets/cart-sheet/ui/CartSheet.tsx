@@ -20,7 +20,7 @@ import { getProductsByIdsAction } from "@/features/get-products-by-ids/action";
 import { CartItemSkeleton } from "@/shared/ui/skeleton";
 import { CACHE_TIMES } from "@/shared/config/constants";
 import Link from "next/link";
-import { ClearCartButton } from "@/features/clear-cart";
+import { ClearCart } from "@/features/cart-management";
 import { useThrottleAction } from "@/shared/hooks/use-throttle-action";
 
 const CartBadge = memo(() => {
@@ -130,7 +130,7 @@ export const CartSheet = () => {
             <SheetFooter className="px-6 py-4">
               <CartSummary />
               <div className="grid grid-cols-2 gap-4">
-                <ClearCartButton />
+                <ClearCart variant="outline" confirmationRequired={true} />
                 {count > 0 && (
                   <Button asChild className="w-full">
                     <Link href="/checkout" onClick={() => setIsOpen(false)}>

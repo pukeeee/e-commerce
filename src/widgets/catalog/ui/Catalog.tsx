@@ -1,6 +1,6 @@
 import { ProductCard } from "@/entities/product/ui/ProductCard";
 import type { PublicProduct } from "@/entities/product";
-import { AddToCartButton } from "@/features/add-to-cart";
+import { AddToCartButton } from "@/features/cart-management";
 import { ToggleFavoriteButton } from "@/features/toggle-favorite";
 
 interface ProductGridProps {
