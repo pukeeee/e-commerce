@@ -23,7 +23,9 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
   return (
     <div
       ref={ref}
-      className={`${gridClassName} category-grid-stagger ${isInView ? "is-in-view" : ""}`}
+      className={`relative z-10 ${gridClassName} category-grid-stagger ${
+        isInView ? "is-in-view" : ""
+      }`}
     >
       {categories.map((category, index) => (
         <div

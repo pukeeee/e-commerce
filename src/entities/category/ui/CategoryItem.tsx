@@ -15,7 +15,7 @@ export function CategoryItem({ category }: CategoryItemProps) {
     <Link
       key={category.id}
       href={`/category/${category.slug}`}
-      className="group flex flex-col items-center gap-3 text-center"
+      className="group flex flex-col items-center gap-3 text-center "
     >
       <div
         className={cn(

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, Variants } from "motion/react";
-import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
+import { BackgroundRippleEffect } from "@/shared/ui/background-ripple-effect";
 
 // Анімації для hero секції (змінено y -> scale для уникнення CLS)
 const heroVariants: Variants = {
@@ -54,12 +54,12 @@ export function HeroSection() {
         initial="hidden"
         animate="visible"
         variants={heroVariants}
-        className="mb-24 mt-16 text-center"
+        className="relative z-10 mb-24 mt-16 text-center w-fit mx-auto"
         style={animationStyle}
       >
         <motion.h1
           variants={headingVariants}
-          className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
+          className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mb-4 text-primary"
           style={animationStyle}
         >
           Техніка Apple

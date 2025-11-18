@@ -68,7 +68,7 @@ export default async function HomePage() {
 
         {/* Категорії */}
         <section className="mb-16">
-          <SectionHeading className="text-2xl font-bold mb-6">
+          <SectionHeading className="text-2xl font-bold mb-6 relative z-10 ">
             Категорії
           </SectionHeading>
           <Suspense fallback={<div className="h-28" />}>
