@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+    --radius: 0.65rem;
     --background: oklch(1 0 0);
     --foreground: oklch(0.23 0 325.86);
     --card: oklch(0.98 0 0);
@@ -161,6 +162,21 @@
     --shadow-lg: var(--shadow-lg);
     --shadow-xl: var(--shadow-xl);
     --shadow-2xl: var(--shadow-2xl);
+
+    --animate-cell-ripple: cell-ripple var(--duration, 200ms) ease-out none 1
+        var(--delay, 0ms);
+
+    @keyframes cell-ripple {
+        0% {
+            opacity: 0.4;
+        }
+        50% {
+            opacity: 0.8;
+        }
+        100% {
+            opacity: 0.4;
+        }
+    }
 }
 
 @layer base {

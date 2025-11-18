@@ -1,10 +1,7 @@
 import Link from "next/link";
 import type { PublicCategory } from "@/entities/category";
 import { cn } from "@/shared/lib/utils";
-import {
-  CATEGORY_ICONS,
-  DEFAULT_CATEGORY_ICON,
-} from "../config/icons";
+import { CATEGORY_ICONS, DEFAULT_CATEGORY_ICON } from "../config/icons";
 
 interface CategoryItemProps {
   category: PublicCategory;

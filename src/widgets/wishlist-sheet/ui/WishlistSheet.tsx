@@ -70,7 +70,7 @@ export function WishlistSheet({
       return (
         <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
           <h3 className="text-xl font-semibold">Ваш список бажань порожній</h3>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground px-12">
             Додайте товари, які вам сподобалися, щоб не втратити їх.
           </p>
         </div>
@@ -87,11 +87,7 @@ export function WishlistSheet({
           </div>
         </div>
         <SheetFooter className="px-6 py-4">
-          <Button
-            variant="outline"
-            onClick={handleClearAll}
-            className="w-full"
-          >
+          <Button variant="outline" onClick={handleClearAll} className="w-full">
             Очистити все
           </Button>
         </SheetFooter>
