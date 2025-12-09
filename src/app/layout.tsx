@@ -6,6 +6,7 @@ import { ThemeProvider, ThemeScript } from "@/shared/ui/theme";
 import { HydrationProvider } from "@/shared/lib/hydration/HydrationProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/shared/ui/sonner";
+import { BottomNavbar } from "@/widgets/bottom-navbar/ui/BottomNavbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -70,7 +71,8 @@ export default function RootLayout({
         <HydrationProvider>
           <ThemeProvider>
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 pb-32 md:pb-0">{children}</main>
+            <BottomNavbar />
 
             {/* Сповіщення (Toasts) */}
             <Toaster position="top-center" />

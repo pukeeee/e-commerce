@@ -18,7 +18,7 @@ import {
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { Skeleton } from "@/shared/ui/skeleton";
 import type { Product } from "@/entities/product";
@@ -71,13 +71,18 @@ const SearchResults = ({
   );
 };
 
+interface SearchSheetProps {
+  trigger?: React.ReactNode;
+}
+
 /**
  * @widget SearchSheet
  * @description Адаптивний віджет для глобального пошуку.
  * - На десктопі (>= 768px) відображається як модальне вікно (Dialog).
  * - На мобільних/планшетах відображається як висувна панель зверху (Sheet).
+ * - Приймає необов'язковий `trigger` для гнучкості.
  */
-export const SearchSheet = () => {
+export const SearchSheet = ({ trigger }: SearchSheetProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -85,7 +90,6 @@ export const SearchSheet = () => {
   const [isPending, startTransition] = useTransition();
   const [isSearching, setIsSearching] = useState(false);
 
-  // ✅ Створюємо debounced-версію функції пошуку, використовуючи константу
   const debouncedSearch = useDebouncedCallback((query: string) => {
     const trimmedQuery = query.trim();
     if (trimmedQuery) {
@@ -100,7 +104,6 @@ export const SearchSheet = () => {
     }
   }, DEBOUNCE.DELAY);
 
-  // Обробник зміни вводу
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchQuery(newValue);
@@ -113,25 +116,18 @@ export const SearchSheet = () => {
     debouncedSearch(newValue);
   };
 
-  // Скидаємо стан при закритті
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery("");
       setProducts([]);
-      debouncedSearch.cancel(); // Скасовуємо будь-які заплановані виклики
+      debouncedSearch.cancel();
     }
   }, [isOpen, debouncedSearch]);
 
-  // Обробник натискання клавіш в полі вводу
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // Запобігаємо стандартній поведінці (наприклад, відправці форми)
-
-      // ✅ Виконуємо пошук негайно, скасовуючи затримку
+      e.preventDefault();
       debouncedSearch.flush();
-
-      // На мобільних пристроях прибираємо фокус, щоб закрити клавіатуру.
-      // На десктопі фокус залишається в полі вводу, щоб уникнути фокусування на діалозі.
       if (!isDesktop) {
         e.currentTarget.blur();
       }
@@ -152,15 +148,17 @@ export const SearchSheet = () => {
     </div>
   );
 
+  const defaultTrigger = (
+    <Button variant="outline" size="icon">
+      <Search className="h-5 w-5" />
+      <span className="sr-only">Відкрити пошук</span>
+    </Button>
+  );
+
   if (isDesktop) {
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Search className="h-5 w-5" />
-            <span className="sr-only">Відкрити пошук</span>
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
         <DialogContent className="sm:max-w-xl p-6">
           <DialogHeader>
             <DialogTitle>Пошук</DialogTitle>
@@ -182,15 +180,9 @@ export const SearchSheet = () => {
     );
   }
 
-  // --- Версія для мобільних/планшетів (панель зверху) ---
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Search className="h-5 w-5" />
-          <span className="sr-only">Відкрити пошук</span>
-        </Button>
-      </SheetTrigger>
+      <SheetTrigger asChild>{trigger || defaultTrigger}</SheetTrigger>
       <SheetContent
         side="top"
         className="h-full w-full max-w-full flex flex-col p-6"

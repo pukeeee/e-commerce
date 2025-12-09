@@ -52,12 +52,12 @@ export const ToggleFavoriteButton = ({
       onClick={handleToggle}
       aria-label={isFavorite ? "Видалити з обраного" : "Додати в обране"}
       className={cn(
-        "group flex items-center justify-center p-2 transition-colors duration-200",
+        "group flex items-center justify-center p-2 select-none [-webkit-tap-highlight-color:transparent] transition-colors duration-200",
 
         {
           "text-primary": isFavorite,
 
-          "text-gray-400 hover:text-primary": !isFavorite,
+          "text-gray-400 hover:text-primary active:text-primary": !isFavorite,
         },
 
         className,

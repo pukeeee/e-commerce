@@ -15,13 +15,14 @@ import { useCart, useCartCount, useCartStoreBase } from "@/entities/cart";
 import { CartItemsList } from "./CartItemsList";
 import { CartSummary } from "./CartSummary";
 import { toast } from "sonner";
-import { memo, useState, useEffect, useTransition, useCallback } from "react";
+import { memo, useState, useEffect, useTransition, useCallback, type ComponentProps } from "react";
 import { getProductsByIdsAction } from "@/features/get-products-by-ids/action";
 import { CartItemSkeleton } from "@/shared/ui/skeleton";
 import { CACHE_TIMES } from "@/shared/config/constants";
 import Link from "next/link";
 import { ClearCart } from "@/features/cart-management";
 import { useThrottleAction } from "@/shared/hooks/use-throttle-action";
+import { cn } from "@/shared/lib/utils";
 
 const CartBadge = memo(() => {
   const isHydrated = useCart((state) => state.isHydrated);
@@ -40,12 +41,16 @@ const CartBadge = memo(() => {
 });
 CartBadge.displayName = "CartBadge";
 
+interface CartSheetProps {
+  triggerProps?: Partial<ComponentProps<typeof Button>>;
+}
+
 /**
  * @description
  * Головний віджет кошика, реалізований як висувна панель (Sheet).
  * Поєднує в собі тригер (кнопку), список товарів та підсумок.
  */
-export const CartSheet = () => {
+export const CartSheet = ({ triggerProps }: CartSheetProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const syncWithServer = useCart((state) => state.syncWithServer);
   const [isSyncing, startSyncTransition] = useTransition();
@@ -103,8 +108,13 @@ export const CartSheet = () => {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
-          <ShoppingCart className="h-5 w-5" />
+        <Button
+          variant="outline"
+          size="icon"
+          {...triggerProps}
+          className={cn("relative", triggerProps?.className)}
+        >
+          <ShoppingCart className="h-6 w-6" />
           <span className="sr-only">Відкрити кошик</span>
           <CartBadge />
         </Button>

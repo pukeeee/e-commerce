@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, memo, type ComponentProps } from "react";
 import Link from "next/link";
+import { Heart } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,24 +12,41 @@ import {
   SheetFooter,
 } from "@/shared/ui/sheet";
 import { Button } from "@/shared/ui/button";
+import { Badge } from "@/shared/ui/badge";
 import { useWishlist, useClearWishlist } from "@/entities/wishlist";
 import { getProductsByIdsAction } from "@/features/get-products-by-ids/action";
 import type { PublicProduct } from "@/entities/product";
 import { WishlistItem } from "./WishlistItem";
 import { WishlistItemSkeleton } from "./WishlistItemSkeleton";
 import { useCartItems } from "@/entities/cart";
+import { cn } from "@/shared/lib/utils";
+
+const WishlistBadge = memo(() => {
+  const productIds = useWishlist((state) => state.productIds);
+  const isHydrated = useWishlist((state) => state.isHydrated);
+  const count = productIds.length;
+
+  if (!isHydrated || count === 0) {
+    return null;
+  }
+
+  return (
+    <Badge
+      variant="destructive"
+      className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full p-0 text-xs"
+    >
+      {count}
+    </Badge>
+  );
+});
+WishlistBadge.displayName = "WishlistBadge";
 
 interface WishlistSheetProps {
-  trigger?: React.ReactNode;
-  isOpen?: boolean;
-  onOpenChange?: (isOpen: boolean) => void;
+  triggerProps?: Partial<ComponentProps<typeof Button>>;
 }
 
-export function WishlistSheet({
-  trigger,
-  isOpen,
-  onOpenChange,
-}: WishlistSheetProps) {
+export function WishlistSheet({ triggerProps }: WishlistSheetProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const productIds = useWishlist((state) => state.productIds);
   const clearWishlist = useClearWishlist();
   const [products, setProducts] = useState<PublicProduct[]>([]);
@@ -38,7 +56,7 @@ export function WishlistSheet({
   const isAnyInCart = products.some((p) => cartItems[p.id]);
 
   useEffect(() => {
-    if (productIds.length > 0) {
+    if (isOpen && productIds.length > 0) {
       startTransition(async () => {
         const res = await getProductsByIdsAction(productIds);
         if (res.success) {
@@ -52,17 +70,17 @@ export function WishlistSheet({
           setProducts([]);
         }
       });
-    } else {
+    } else if (productIds.length === 0) {
       setProducts([]);
     }
-  }, [productIds]);
+  }, [productIds, isOpen]);
 
   const handleClearAll = () => {
     clearWishlist();
   };
 
   const handleCheckoutClick = () => {
-    onOpenChange?.(false);
+    setIsOpen(false);
   };
 
   const renderContent = () => {
@@ -111,30 +129,29 @@ export function WishlistSheet({
     );
   };
 
-  const sheetContent = (
-    <SheetContent className="flex w-full flex-col sm:max-w-md">
-      <SheetHeader>
-        <SheetTitle>Обрані товари</SheetTitle>
-      </SheetHeader>
-      {renderContent()}
-    </SheetContent>
-  );
-
-  if (trigger) {
-    return (
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetTrigger asChild>{trigger}</SheetTrigger>
-        {sheetContent}
-      </Sheet>
-    );
-  }
-
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline">Open Wishlist</Button>
+        <Button
+          variant="outline"
+          size="icon"
+          {...triggerProps}
+          className={cn("relative", triggerProps?.className)}
+        >
+          <Heart className="h-6 w-6" />
+          <span className="sr-only">Відкрити обране</span>
+          <WishlistBadge />
+        </Button>
       </SheetTrigger>
-      {sheetContent}
+      <SheetContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="flex w-full flex-col sm:max-w-md"
+      >
+        <SheetHeader>
+          <SheetTitle>Обрані товари</SheetTitle>
+        </SheetHeader>
+        {renderContent()}
+      </SheetContent>
     </Sheet>
   );
 }
