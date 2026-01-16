@@ -22,7 +22,7 @@ HeaderLogo.displayName = "HeaderLogo";
 const DesktopNav = memo(() => (
   <nav className="flex items-center gap-4">
     <Button asChild variant="ghost">
-      <Link href="/contacts">Контакты</Link>
+      <Link href="/contacts">Контакти</Link>
     </Button>
     <ThemeToggle />
     <SearchSheet />
